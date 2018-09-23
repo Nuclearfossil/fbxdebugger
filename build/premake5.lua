@@ -15,6 +15,8 @@ project "Viewer"
     local imguiPath = "../extern/imgui/"
     local glfwPath = "../extern/glfw/"
     local glewPath = "../extern/glew/"
+    local glmPath = "../extern/glm/"
+
     files {
         imguiPath .. "*.h", imguiPath .. "*.cpp",
         srcPath .. "**.h", srcPath .. "**.cpp"
@@ -24,7 +26,8 @@ project "Viewer"
         imguiPath,
         srcPath,
         glfwPath .. "include",
-        glewPath .. "include"
+        glewPath .. "include",
+        glmPath
     }
 
     libdirs { 
