@@ -1,0 +1,6 @@
+## Be build our own solutions using premake5
+build/sln
+build/targets
+
+## speaking of premake5, we want to add it to git
+!bin/premake5.exe
