@@ -10,12 +10,10 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-typedef struct
-{
-	bool ShouldExit;
-	bool OpenFile;
-} AppState;
+#include "graphics/Graphics.h"
 
+volatile AppState gAppState;
+void BeginUI();
 void BuildGUI(volatile AppState& state);
 void BuildMenu(volatile AppState& state);
 
@@ -27,16 +25,20 @@ static void glfw_error_callback(int error, const char* description)
 int main(int, char**)
 {
     // Setup window
-    glfwSetErrorCallback(glfw_error_callback);
-    if (!glfwInit())
-        return 1;
+    // glfwSetErrorCallback(glfw_error_callback);
+    // if (!glfwInit())
+    //     return 1;
+	if (!InitGfxSubsystem())
+		return -1;
 
     // GL 3.0 + GLSL 150
-    const char* glsl_version = "#version 150";
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
+	// OLD:
+    // const char* glsl_version = "#version 150";
+    // glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    // glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
+    // glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
+	SetWindowHints();
 
     // Create window with graphics context
     GLFWwindow* window = glfwCreateWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 example", NULL, NULL);
@@ -54,18 +56,24 @@ int main(int, char**)
         return 1;
     }
 
+	SetupWindow(window);
+
     // Setup Dear ImGui binding
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
-    io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
+	// OLD:
+    // IMGUI_CHECKVERSION();
+    // ImGui::CreateContext();
+    // ImGuiIO& io = ImGui::GetIO(); (void)io;
+    // io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
 
-    ImGui_ImplGlfw_InitForOpenGL(window, true);
-    ImGui_ImplOpenGL3_Init(glsl_version);
+	// OLD:
+    // ImGui_ImplGlfw_InitForOpenGL(window, true);
+    // ImGui_ImplOpenGL3_Init(glsl_version);
+	UIInit();
 
     // Setup style
-    ImGui::StyleColorsDark();
+	// OLD:
+    //ImGui::StyleColorsDark();
     //ImGui::StyleColorsClassic();
 
     // Load Fonts
@@ -97,10 +105,14 @@ int main(int, char**)
         // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
         glfwPollEvents();
 
+		// OLD
         // Start the Dear ImGui frame
-        ImGui_ImplOpenGL3_NewFrame();
-        ImGui_ImplGlfw_NewFrame();
-        ImGui::NewFrame();
+        // ImGui_ImplOpenGL3_NewFrame();
+        // ImGui_ImplGlfw_NewFrame();
+        // ImGui::NewFrame();
+		BeginUI();
+
+		BuildGUI(gAppState);
 
         // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
         if (show_demo_window)
@@ -154,12 +166,57 @@ int main(int, char**)
     }
 
     // Cleanup
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
+	// OLD:
+    // ImGui_ImplOpenGL3_Shutdown();
+    // ImGui_ImplGlfw_Shutdown();
+    // ImGui::DestroyContext();
+	// 
+    // glfwDestroyWindow(window);
+    // glfwTerminate();
 
-    glfwDestroyWindow(window);
-    glfwTerminate();
+	ShutdownGFX();
 
     return 0;
 }
+
+void BuildMenu(volatile AppState& state)
+{
+	if (ImGui::BeginMainMenuBar())
+	{
+		if (ImGui::BeginMenu("File"))
+		{
+			if (ImGui::MenuItem("Open"))
+			{
+				// sSelectedNode = nullptr;
+				// sSelectedCurve = nullptr;
+				state.OpenFile = true;
+			}
+
+			if (ImGui::MenuItem("Quit", "Alt-F4"))
+				state.ShouldExit = true;
+
+			ImGui::EndMenu();
+		}
+		ImGui::EndMainMenuBar();
+	}
+}
+
+void BeginUI()
+{
+	//OLD: ImGui_ImplGlfwGL3_NewFrame();
+	ImGui_ImplOpenGL3_NewFrame();
+	ImGui_ImplGlfw_NewFrame();
+	ImGui::NewFrame();
+}
+
+void BuildGUI(volatile AppState& state)
+{
+	BuildMenu(state);
+
+	// DisplaySceneInfo(state);
+	// 
+	// DisplayAnimationInfo();
+}
+
+
+
