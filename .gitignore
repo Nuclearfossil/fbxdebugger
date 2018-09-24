@@ -4,4 +4,6 @@ build/targets
 
 ## speaking of premake5, we want to add it to git
 !bin/premake5.exe
-extern/FBX/lib/vs2015
+extern/FBX/bin
+extern/FBX/lib
+extern/FBX/samples

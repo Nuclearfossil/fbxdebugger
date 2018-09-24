@@ -43,7 +43,7 @@ project "Viewer"
             fbxPath .. "lib/vs2015/x64/Debug"
         }
         postbuildcommands { "xcopy $(SolutionDir)..\\..\\resources $(TargetDir)resources\\* /s /e /y" }
-        debugdir "$(TargetPath)"
+        debugdir "$(TargetDir)"
 
     filter "configurations:Release"
         architecture "x86_64"
@@ -56,4 +56,4 @@ project "Viewer"
             fbxPath .. "lib/vs2015/x64/Release"
         }
         postbuildcommands { "xcopy $(SolutionDir)..\\..\\resources $(TargetDir)resources\\* /s /e /y" }
-        debugdir "$(TargetPath)"
+        debugdir "$(TargetDir)"
