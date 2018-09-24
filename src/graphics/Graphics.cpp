@@ -1,6 +1,5 @@
-//#include "Shader.h"
-//
-//#include "graphics\Program.h"
+#include "Shader.h"
+#include "graphics\Program.h"
 
 #include "misc\Utils.h"
 #include "misc\json.h"
@@ -20,12 +19,6 @@
 
 #include "Graphics.h"
 
-static void ErrorCallback(int error, const char* description);
-static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
-static void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
-static void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
-static void CharCallback(GLFWwindow* window, unsigned int c);
-
 void UpdateMousePos();
 
 GLFWwindow* gWindow = nullptr;
@@ -41,14 +34,13 @@ double mouseY = 0.0;
 nlohmann::json* gSettings = nullptr;
 const char* glsl_version = "#version 150";
 
-void SetupWindow(GLFWwindow* window)
-{
-	gWindow = window;
+GLFWwindow* GetWindow() 
+{ 
+	return gWindow; 
 }
 
 bool InitGfxSubsystem()
 {
-	glfwSetErrorCallback(ErrorCallback);
 	if (!glfwInit())
 		return false;
 
@@ -61,11 +53,35 @@ void InitRenderState()
 	glDepthFunc(GL_LESS);
 }
 
-KeyState GetKeystate() { return gCurrentKeyState; }
-
-void SetMouseInfo(MouseInfo* info)
+KeyState GetKeystate(ImGuiIO& io)
 {
-	gMouseInfo = info;
+	memset(&gCurrentKeyState, 0, sizeof(KeyState));
+
+	if (io.KeysDown[GLFW_KEY_ESCAPE])
+	{
+		glfwSetWindowShouldClose(gWindow, GL_TRUE);
+		gAppState->ShouldExit = true;
+	}
+
+	int wasCursorKey = -1;
+
+	if (io.KeysDown[GLFW_KEY_W])
+		wasCursorKey = KEY_W;
+	if (io.KeysDown[GLFW_KEY_S])
+		wasCursorKey = KEY_S;
+	if (io.KeysDown[GLFW_KEY_A])
+		wasCursorKey = KEY_A;
+	if (io.KeysDown[GLFW_KEY_D])
+		wasCursorKey = KEY_D;
+
+	if (wasCursorKey != -1)
+	{
+		gCurrentKeyState.key[wasCursorKey] = true;
+		gCurrentKeyState.action[wasCursorKey] = GLFW_PRESS;
+	}
+	gCurrentKeyState.mods = io.KeyShift;
+
+	return gCurrentKeyState; 
 }
 
 void WindowSizeCallback(GLFWwindow* window, int width, int height)
@@ -80,10 +96,6 @@ void WindowSizeCallback(GLFWwindow* window, int width, int height)
 void BindInternalHandlers()
 {
 	glfwGetCursorPos(gWindow, &mouseX, &mouseY);
-
-	glfwSetMouseButtonCallback(gWindow, MouseButtonCallback);
-	glfwSetScrollCallback(gWindow, ScrollCallback);
-	glfwSetCharCallback(gWindow, CharCallback);
 }
 
 bool CreateMainWindow(volatile AppState* state, nlohmann::json& settings)
@@ -101,7 +113,6 @@ bool CreateMainWindow(volatile AppState* state, nlohmann::json& settings)
 	glfwSetWindowSizeCallback(gWindow, WindowSizeCallback);
 
 	glfwMakeContextCurrent(gWindow);
-	glfwSetKeyCallback(gWindow, KeyCallback);
 
 	glewExperimental = GL_TRUE;
 	glewInit();
@@ -132,18 +143,21 @@ void UpdateFramebufferSize(int &width, int &height)
 	glfwGetFramebufferSize(gWindow, &width, &height);
 }
 
-void ClearBackground()
+void Clear(GLFWwindow* window, ImVec4& clearColor)
 {
-	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+	int display_w, display_h;
+	glfwMakeContextCurrent(window);
+	glfwGetFramebufferSize(window, &display_w, &display_h);
+	glViewport(0, 0, display_w, display_h);
+	glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
 	glClearDepth(1.0f);
-	glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void Swap()
 {
+	glfwMakeContextCurrent(gWindow);
 	glfwSwapBuffers(gWindow);
-
-	UpdateMousePos();
 }
 
 void ShutdownGFX()
@@ -217,111 +231,11 @@ void UIShutdown()
 	ImGui_ImplGlfw_Shutdown();
 }
 
-//void LoadShaders(Program** program, const char* vertexShaderFile, const char* fragmentShaderFile)
-//{
-//	std::vector<Shader> shaders;
-//	shaders.push_back(Shader::shaderFromFile(ResourcePath(vertexShaderFile), GL_VERTEX_SHADER));
-//	shaders.push_back(Shader::shaderFromFile(ResourcePath(fragmentShaderFile), GL_FRAGMENT_SHADER));
-//
-//	*program = new Program(shaders);
-//}
-
-static void ErrorCallback(int error, const char* description)
+void LoadShaders(Program** program, const char* vertexShaderFile, const char* fragmentShaderFile)
 {
-	fputs(description, stderr);
-}
+	std::vector<Shader> shaders;
+	shaders.push_back(Shader::shaderFromFile(ResourcePath(vertexShaderFile), GL_VERTEX_SHADER));
+	shaders.push_back(Shader::shaderFromFile(ResourcePath(fragmentShaderFile), GL_FRAGMENT_SHADER));
 
-static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-	{
-		glfwSetWindowShouldClose(window, GL_TRUE);
-		gAppState->ShouldExit = true;
-	}
-
-	int wasCursorKey = -1;
-	switch (key)
-	{
-	case GLFW_KEY_W:
-		wasCursorKey = KEY_W;
-		break;
-	case GLFW_KEY_S:
-		wasCursorKey = KEY_S;
-		break;
-	case GLFW_KEY_A:
-		wasCursorKey = KEY_A;
-		break;
-	case GLFW_KEY_D:
-		wasCursorKey = KEY_D;
-		break;
-	default:
-		break;
-	}
-
-	if (wasCursorKey != -1)
-	{
-		gCurrentKeyState.key[wasCursorKey] = true;
-		gCurrentKeyState.action[wasCursorKey] = action;		
-	}
-	gCurrentKeyState.mods = mods;
-
-	// Pass calls on through to ImGui
-	// OLD:
-	// ImGui_ImplGlfwGL3_KeyCallback(window, key, scancode, action, mods);
-	ImGui_ImplGlfw_KeyCallback(window, key, scancode, action, mods);
-}
-
-static void ScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
-{
-	// OLD:
-	// ImGui_ImplGlfwGL3_ScrollCallback(window, xoffset, yoffset);
-	ImGui_ImplGlfw_ScrollCallback(window, xoffset, yoffset);
-}
-
-static void CharCallback(GLFWwindow* window, unsigned int c)
-{
-	// OLD:
-	// ImGui_ImplGlfwGL3_CharCallback(window, c);
-	ImGui_ImplGlfw_CharCallback(window, c);
-}
-
-void UpdateMousePos()
-{
-	if (gMouseInfo == nullptr) return;
-
-	double xpos, ypos;
-	glfwGetCursorPos(gWindow, &xpos, &ypos);
-
-	gMouseInfo->deltaX = mouseX - xpos;
-	gMouseInfo->deltaY = mouseY - ypos;
-
-	mouseX = xpos;
-	mouseY = ypos;
-}
-
-static void MouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
-{
-	if (gMouseInfo == nullptr) return;
-
-	switch (button)
-	{
-	case GLFW_MOUSE_BUTTON_LEFT:
-		gMouseInfo->lmb = (action == GLFW_PRESS);
-		break;
-	case GLFW_MOUSE_BUTTON_MIDDLE:
-		gMouseInfo->mmb = (action == GLFW_PRESS);
-		break;
-	case GLFW_MOUSE_BUTTON_RIGHT:
-		gMouseInfo->rmb = (action == GLFW_PRESS);
-		break;
-	default:
-		gMouseInfo->lmb = false;
-		gMouseInfo->mmb = false;
-		gMouseInfo->rmb = false;
-		break;
-	}
-
-	// OLD:
-	// ImGui_ImplGlfwGL3_MouseButtonCallback(window, button, action, mods);
-	ImGui_ImplGlfw_MouseButtonCallback(window, button, action, mods);
+	*program = new Program(shaders);
 }

@@ -15,6 +15,8 @@ typedef struct
 	bool OpenFile;
 } AppState;
 
+GLFWwindow* GetWindow();
+
 void SetWindowHints();
 
 bool InitGfxSubsystem();
@@ -24,9 +26,7 @@ bool CreateMainWindow(volatile AppState* state, nlohmann::json& gSettings);
 bool WindowShouldClose();
 void PollEvents();
 
-KeyState GetKeystate();
-
-void SetMouseInfo(MouseInfo* info);
+KeyState GetKeystate(ImGuiIO& io);
 
 void InitRenderState();
 
@@ -34,15 +34,12 @@ void UpdateFramebufferSize(int &width, int &height);
 
 void Swap();
 
-void ClearBackground();
-
+void Clear(GLFWwindow* window, ImVec4& clearColor);
 
 void UIInit();
 void UINewFrame();
 
 void UIShutdown();
-
-void SetupWindow(GLFWwindow* window);
 
 void LoadTriangle(Program* program, GLuint& vao, GLuint& vbo);
 void LoadShaders(Program** program, const char* vertexShaderFile, const char* fragmentShaderFile);

@@ -11,19 +11,77 @@
 #include <GLFW/glfw3.h>
 
 #include "graphics/Graphics.h"
+#include "graphics/Grid.h"
+
+#include "fbxcontainer/scenecontainer.h"
+
+#include "misc/imgui_Samples.h"
+#include "basiccamera/FreeLookCamera.h"
+
+#include "misc/debug.h"
+
+#include <thread>
+#include <fstream>
+
+basicCamera::FreeLookCamera gCamera;
+Grid gGrid;
+
+MouseInfo gMouseInfo;
 
 volatile AppState gAppState;
+volatile bool gRegenAssets = false;
+
+SceneContainer* gContainer = nullptr;
+
+static NodeSharedPtr sSelectedNode = nullptr;
+const double turnFactorRadsPerSecond = glm::radians(45.0);
+
+void InitApp();
+
+// UI functions
 void BeginUI();
 void BuildGUI(volatile AppState& state);
 void BuildMenu(volatile AppState& state);
+void RenderUI(GLFWwindow* window);
 
-static void glfw_error_callback(int error, const char* description)
-{
-    fprintf(stderr, "Glfw Error %d: %s\n", error, description);
-}
+void RenderScene(int width, int height);
+
+void DisplaySceneInfo();
+void DisplayMeshInfo(volatile AppState& state);
+void DisplaySubModel(NodeSharedPtr submodel);
+
+void DisplayAnimationInfo();
+
+void ClearBackground();
+
+void Update(double deltaSeconds);
+
+void ProcessingThread();
+
+Program* gProgram = nullptr;
+Program* gWireframe3DProgram = nullptr;
+Program* gModelProgram = nullptr;
+
+nlohmann::json gSettings;
 
 int main(int, char**)
 {
+	if (FileExists("settings.json"))
+	{
+		std::ifstream settings("settings.json");
+		settings >> gSettings;
+	}
+	else
+	{
+		gSettings["window"]["width"] = 1500;
+		gSettings["window"]["height"] = 960;
+	}
+
+	InitApp();
+
+	// Initialize our processing thread
+	std::thread processor(ProcessingThread);
+
     // Setup window
     // glfwSetErrorCallback(glfw_error_callback);
     // if (!glfwInit())
@@ -40,23 +98,36 @@ int main(int, char**)
     // glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
 	SetWindowHints();
 
-    // Create window with graphics context
-    GLFWwindow* window = glfwCreateWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 example", NULL, NULL);
-    if (window == NULL)
-        return 1;
-    glfwMakeContextCurrent(window);
-    glfwSwapInterval(1); // Enable vsync
+	// OLD:
+	// Create window with graphics context
+    // GLFWwindow* window = glfwCreateWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 example", NULL, NULL);
+    // if (window == NULL)
+    //     return 1;
+    // glfwMakeContextCurrent(window);
+    // glfwSwapInterval(1); // Enable vsync
+	// 
+    // // Initialize OpenGL loader
+    // bool err = glewInit() != GLEW_OK;
+	// 
+    // if (err)
+    // {
+    //     fprintf(stderr, "Failed to initialize OpenGL loader!\n");
+    //     return 1;
+    // }
 
-    // Initialize OpenGL loader
-    bool err = glewInit() != GLEW_OK;
+	CreateMainWindow(&gAppState, gSettings);
+	
+	GetWindow();
+	
+	InitRenderState();
 
-    if (err)
-    {
-        fprintf(stderr, "Failed to initialize OpenGL loader!\n");
-        return 1;
-    }
+	gCamera.setPosition(glm::vec3(10.0f, 10.0f, 10.0f));
 
-	SetupWindow(window);
+	LoadShaders(&gProgram, "vertex-shader.txt", "fragment-shader.txt");
+	LoadShaders(&gWireframe3DProgram, "grid-vshader.txt", "grid-fshader.txt");
+	LoadShaders(&gModelProgram, "model-vshader.txt", "model-fshader.txt");
+
+	gGrid.Initialize(50.0f, 50, 5);
 
     // Setup Dear ImGui binding
 	// OLD:
@@ -91,19 +162,29 @@ int main(int, char**)
     //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
     //IM_ASSERT(font != NULL);
 
-    bool show_demo_window = false;
-    bool show_another_window = true;
-    ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+	glfwSetTime(0.0);
 
+	double lastFrameTime = glfwGetTime();
+
+	GLFWwindow* window = GetWindow();
     // Main loop
-    while (!glfwWindowShouldClose(window))
+    while (!glfwWindowShouldClose(window) && !gAppState.ShouldExit)
     {
+		int width, height;
+
+		double currentTime = glfwGetTime();
+
         // Poll and handle events (inputs, window resize, etc.)
         // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
         // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
         // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
         // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
         glfwPollEvents();
+
+		Update(currentTime - lastFrameTime);
+		lastFrameTime = currentTime;
+
+		UpdateFramebufferSize(width, height);
 
 		// OLD
         // Start the Dear ImGui frame
@@ -114,56 +195,30 @@ int main(int, char**)
 
 		BuildGUI(gAppState);
 
-        // 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
-        if (show_demo_window)
-            ImGui::ShowDemoWindow(&show_demo_window);
+		ShowSampleWindows();
 
-        // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
-        {
-            static float f = 0.0f;
-            static int counter = 0;
+		Clear(window, clear_color);
 
-            ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+		RenderScene(width, height);
 
-            ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
-            ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-            ImGui::Checkbox("Another Window", &show_another_window);
+		RenderUI(window);
 
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3("clear color", (float*)&clear_color); // Edit 3 floats representing a color
+		Swap();
 
-            if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-                counter++;
-            ImGui::SameLine();
-            ImGui::Text("counter = %d", counter);
+		// do we need to regenerate assets?
+		if (gRegenAssets)
+		{
+			gContainer->BuildRenderable();
+			gRegenAssets = false;
+		}
 
-            ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-            ImGui::End();
-        }
-
-        // 3. Show another simple window.
-        if (show_another_window)
-        {
-            ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-            ImGui::Text("Hello from another window!");
-            if (ImGui::Button("Close Me"))
-                show_another_window = false;
-            ImGui::End();
-        }
-
-        // Rendering
-        ImGui::Render();
-        int display_w, display_h;
-        glfwMakeContextCurrent(window);
-        glfwGetFramebufferSize(window, &display_w, &display_h);
-        glViewport(0, 0, display_w, display_h);
-        glClearColor(clear_color.x, clear_color.y, clear_color.z, clear_color.w);
-        glClear(GL_COLOR_BUFFER_BIT);
-        ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-        glfwMakeContextCurrent(window);
-        glfwSwapBuffers(window);
     }
+
+	// Shut down processing thread
+	if (processor.joinable())
+	{
+		processor.detach();
+	}
 
     // Cleanup
 	// OLD:
@@ -177,6 +232,30 @@ int main(int, char**)
 	ShutdownGFX();
 
     return 0;
+}
+
+void InitApp()
+{
+	gAppState.OpenFile = false;
+	gAppState.ShouldExit = false;
+}
+
+void PrepRender(GLFWwindow* window, ImVec4& clearColor)
+{
+	int display_w, display_h;
+	glfwMakeContextCurrent(window);
+	glfwGetFramebufferSize(window, &display_w, &display_h);
+	glViewport(0, 0, display_w, display_h);
+	glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
+	glClearDepth(1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+}
+
+void RenderUI(GLFWwindow* window)
+{
+	// Rendering
+	ImGui::Render();
+	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 void BuildMenu(volatile AppState& state)
@@ -213,10 +292,243 @@ void BuildGUI(volatile AppState& state)
 {
 	BuildMenu(state);
 
-	// DisplaySceneInfo(state);
-	// 
-	// DisplayAnimationInfo();
+	DisplaySceneInfo();
+ 
+	DisplayAnimationInfo();
 }
 
+void DisplaySceneInfo()
+{
+	ImGui::Begin("Scene", nullptr, ImGuiWindowFlags_HorizontalScrollbar);
+	ImGui::SetWindowSize(ImVec2(600, 400), ImGuiSetCond_FirstUseEver);
 
+	if (gAppState.OpenFile)
+	{
+		ImGui::Text("Loading FBX");
+	}
+	else
+	{
+		DisplayMeshInfo(gAppState);
+	}
 
+	ImGui::End();
+}
+
+void DisplayMeshInfo(volatile AppState& state)
+{
+	// Display contents in a scrolling region
+	if (gContainer != nullptr)
+	{
+		ImGui::BeginChild("Scrolling");
+
+		// Display debug on meshes
+		int index = 0;
+		auto models = gContainer->GetMeshs();
+		for each (NodeSharedPtr var in models)
+		{
+			ModelSharedPtr model = std::dynamic_pointer_cast<Model>(var);
+			for each (std::string attribName in model->AttributeNames)
+			{
+				ImGui::Text("Attribute: %s", attribName.c_str());
+			}
+
+			DisplaySubModel(model);
+		}
+
+		ImGui::EndChild();
+	}
+}
+
+void DisplaySubModel(NodeSharedPtr submodel)
+{
+	ImGui::Indent();
+	if (ImGui::Selectable(submodel->Name.c_str(), sSelectedNode == submodel))
+		sSelectedNode = submodel;
+
+	int childCount = SizeT2Int32(submodel->Children.size());
+	for (int index = 0; index < childCount; index++)
+	{
+		DisplaySubModel(submodel->Children[index]);
+	}
+
+	ImGui::Unindent();
+}
+
+void DisplayAnimationInfo()
+{
+	ImGui::Begin("Animation", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_MenuBar);
+	ImGui::SetWindowSize(ImVec2(600, 400), ImGuiSetCond_FirstUseEver);
+
+	if (gAppState.OpenFile)
+	{
+		ImGui::Text("Loading FBX");
+	}
+	else
+	{
+		if (gContainer != nullptr)
+		{
+			ImGui::BeginChild("Scrolling");
+
+			for each (auto take in gContainer->GetTakeList())
+			{
+				int layers = take.mLayerInfoList.Size();
+				for (int index = 0; index < layers; index++)
+				{
+					ImGui::Text(take.mLayerInfoList[index]->mName.Buffer());
+				}
+			}
+
+			for each (auto animStack in gContainer->GetAnimStack())
+			{
+				if (ImGui::CollapsingHeader(animStack->GetName()))
+				{
+					unsigned __int32 animLayerCount = SizeT2Int32(animStack->GetMemberCount<FbxAnimLayer>());
+
+					ImGui::Indent();
+					for (unsigned __int32 animLayerIndex = 0; animLayerIndex < animLayerCount; animLayerIndex++)
+					{
+						for each (auto mesh in gContainer->GetMeshs())
+						{
+							ProcessAnimLayer(mesh->FbxNodeRef, animStack, animLayerIndex);
+						}
+					}
+					ImGui::Unindent();
+				}
+			}
+
+			ImGui::EndChild();
+		}
+	}
+
+	ImGui::End();
+}
+
+void ProcessingThread()
+{
+	while (gAppState.ShouldExit == false)
+	{
+		if (gAppState.OpenFile)
+		{
+			if (gContainer != nullptr)
+			{
+				delete gContainer;
+				gContainer = nullptr;
+			}
+
+			// open the file
+			char filename[1024];
+			if (OpenFile(filename))
+			{
+				gContainer = new SceneContainer();
+				gContainer->LoadFile(filename);
+				gContainer->Process();
+				
+				gRegenAssets = true;
+				gAppState.OpenFile = false;
+			}
+		}
+	}
+}
+
+void RenderScene(int width, int height)
+{
+	// Build out matrices
+	glm::mat4 model(1.0f);
+	glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 10000.0f);
+
+	// glm::mat4 camera = glm::lookAt(glm::vec3(575.0f, 575.0f, 575.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	glm::mat4 view = gCamera.getView();
+
+	glm::mat4 mvp = projection * view * model;
+
+	glViewport(0, 0, width, height);
+	glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "Begin Test");
+
+	glUseProgram(gWireframe3DProgram->object());
+	GLuint mvpMatrixID = gWireframe3DProgram->uniform("mvpmatrix");
+	glUniformMatrix4fv(mvpMatrixID, 1, GL_FALSE, glm::value_ptr(mvp));
+
+	gGrid.Draw();
+	glPopDebugGroup();
+
+	if (gContainer != nullptr)
+	{
+		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, -1, "Scene Data Render");
+		glUseProgram(gModelProgram->object());
+		GLuint mvpMatrixID = gModelProgram->uniform("mvpmatrix");
+		glUniformMatrix4fv(mvpMatrixID, 1, GL_FALSE, glm::value_ptr(mvp));
+		gContainer->RenderAll(sSelectedNode, gModelProgram);
+		glUseProgram(0);
+		glPopDebugGroup();
+	}
+
+	glUseProgram(0);
+}
+
+ImVec2 gLastMousePosition;
+
+void UpdateMouse(ImGuiIO& io)
+{
+	gMouseInfo.lmb = ImGui::IsMouseDown(0); // 0 - lmb  1 - mmb  2 - rmb
+
+	gMouseInfo.deltaX = io.MouseDelta.x;
+	gMouseInfo.deltaY = io.MouseDelta.y;
+
+	gLastMousePosition = io.MousePos;
+}
+
+void Update(double deltaSeconds)
+{
+	// Don't update if the UI has the UI.
+	ImGuiIO& io = ImGui::GetIO();
+
+	if (io.WantCaptureKeyboard || io.WantCaptureMouse)
+	{
+		return;
+	}
+
+	UpdateMouse(io);
+
+	if (!gMouseInfo.lmb) return;
+
+	KeyState keyState = GetKeystate(io);
+
+	gCamera.addXAngle((float)(gMouseInfo.deltaY / turnFactorRadsPerSecond * deltaSeconds));
+	gCamera.addYAngle((float)(gMouseInfo.deltaX / turnFactorRadsPerSecond * deltaSeconds));
+
+	if (keyState.action == GLFW_RELEASE)
+	{
+		gCamera.right(0.0f);
+		gCamera.forward(0.0f);
+
+		return;
+	}
+
+	float movement = 10.0f;
+	if (keyState.mods == 1)
+	{
+		movement = 100.f;
+	}
+
+	movement *= (float)deltaSeconds;
+
+	if (keyState.key[KEY_A])
+	{
+		gCamera.right((keyState.action[KEY_A] == GLFW_PRESS) || (keyState.action[KEY_A] == GLFW_REPEAT) ? -movement : 0.0f);
+	}
+
+	if (keyState.key[KEY_D])
+	{
+		gCamera.right((keyState.action[KEY_D] == GLFW_PRESS) || (keyState.action[KEY_D] == GLFW_REPEAT) ? movement : 0.0f);
+	}
+
+	if (keyState.key[KEY_W])
+	{
+		gCamera.forward((keyState.action[KEY_W] == GLFW_PRESS) || (keyState.action[KEY_W] == GLFW_REPEAT) ? movement : 0.0f);
+	}
+
+	if (keyState.key[KEY_S])
+	{
+		gCamera.forward((keyState.action[KEY_S] == GLFW_PRESS) || (keyState.action[KEY_S] == GLFW_REPEAT) ? -movement : 0.0f);
+	}
+}

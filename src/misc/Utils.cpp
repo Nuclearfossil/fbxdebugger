@@ -73,7 +73,6 @@ bool FileExists(const char* filename)
 	return result;
 }
 
-
 unsigned __int32 SizeT2Int32(size_t value)
 {
 	if (value > MAXUINT32) return MAXUINT32;
