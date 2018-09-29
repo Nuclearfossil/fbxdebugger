@@ -69,7 +69,6 @@ namespace ImGui
 		return pressed;
 	}
 
-
 	bool ToolbarButton(ImTextureID texture, const ImVec4& bg_color, const char* tooltip)
 	{
 		auto frame_padding = ImGui::GetStyle().FramePadding;
@@ -96,8 +95,6 @@ namespace ImGui
 		return ret;
 	}
 
-
-
 	bool BeginToolbar(const char* str_id, ImVec2 screen_pos, ImVec2 size)
 	{
 		bool is_global = GImGui->CurrentWindowStack.Size == 1;
@@ -118,7 +115,6 @@ namespace ImGui
 		return ret;
 	}
 
-
 	void EndToolbar()
 	{
 		auto frame_padding = ImGui::GetStyle().FramePadding;
@@ -133,11 +129,8 @@ namespace ImGui
 		if (GImGui->CurrentWindowStack.Size > 1) SetCursorScreenPos(pos + ImVec2(0, size.y + GetStyle().FramePadding.y * 2));
 	}
 
-
 	ImVec2 GetOsImePosRequest()
 	{
-		// OLD:
-		// return ImGui::GetCurrentContext()->OsImePosRequest;
 		return ImGui::GetCurrentContext()->PlatformImePos;
 	}
 
@@ -321,8 +314,6 @@ namespace ImGui
 	bool IsFocusedHierarchy()
 	{
 		ImGuiContext& g = *GImGui;
-		// OLD:
-		// return isPredecessor(g.CurrentWindow, g.FocusedWindow) || isPredecessor(g.FocusedWindow, g.CurrentWindow);
 		return isPredecessor(g.CurrentWindow, g.NavWindow) || isPredecessor(g.NavWindow, g.CurrentWindow);
 	}
 
@@ -397,8 +388,7 @@ namespace ImGui
 		PopID();
 		draw_list->ChannelsMerge();
 	}
-
-
+	
 	ImVec2 GetNodeInputPos(ImGuiID id, int input)
 	{
 		PushID(id);
@@ -423,8 +413,7 @@ namespace ImGui
 		PopID();
 		return pos;
 	}
-
-
+	
 	ImVec2 GetNodeOutputPos(ImGuiID id, int output)
 	{
 		PushID(id);
@@ -448,8 +437,7 @@ namespace ImGui
 		PopID();
 		return pos;
 	}
-
-
+	
 	bool NodePin(ImGuiID id, ImVec2 screen_pos)
 	{
 		ImDrawList* draw_list = GetWindowDrawList();
@@ -463,7 +451,6 @@ namespace ImGui
 			hovered ? ImColor(0, 150, 0, 150) : ImColor(150, 150, 150, 150));
 		return hovered;
 	}
-
 
 	void NodeLink(ImVec2 from, ImVec2 to)
 	{
@@ -485,7 +472,6 @@ namespace ImGui
 		}
 		draw_list->PathStroke(ImColor(200, 200, 100), false, 3.0f);
 	}
-
 
 	ImVec2 operator*(float f, const ImVec2& v)
 	{
@@ -570,8 +556,6 @@ namespace ImGui
 
 		ImVec2 beg_pos = GetCursorScreenPos();
 
-		// OLD:
-		// const ImRect inner_bb = window->WindowRectClipped;
 		const ImRect inner_bb = window->OuterRectClipped;
 		const ImRect frame_bb(inner_bb.Min - style.FramePadding, inner_bb.Max + style.FramePadding);
 
@@ -673,8 +657,6 @@ namespace ImGui
 			window->StateStorage.SetFloat((ImGuiID)StorageValues::FROM_X, from_x);
 			window->StateStorage.SetFloat((ImGuiID)StorageValues::FROM_Y, from_y);
 		}
-		// OLD:
-		//else if (ImGui::IsMouseDragging(2) && ImGui::IsItemHovered())
 		else if (ImGui::IsMouseDragging(2) && ImGui::IsHovered(frame_bb, id))
 		{
 			window->StateStorage.SetBool((ImGuiID)StorageValues::IS_PANNING, true);

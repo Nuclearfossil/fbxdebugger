@@ -33,6 +33,8 @@ volatile bool gRegenAssets = false;
 
 SceneContainer* gContainer = nullptr;
 
+ImVec2 gLastMousePosition;
+
 static NodeSharedPtr sSelectedNode = nullptr;
 const double turnFactorRadsPerSecond = glm::radians(45.0);
 
@@ -83,37 +85,10 @@ int main(int, char**)
 	std::thread processor(ProcessingThread);
 
     // Setup window
-    // glfwSetErrorCallback(glfw_error_callback);
-    // if (!glfwInit())
-    //     return 1;
 	if (!InitGfxSubsystem())
 		return -1;
 
-    // GL 3.0 + GLSL 150
-	// OLD:
-    // const char* glsl_version = "#version 150";
-    // glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    // glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    // glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);  // 3.2+ only
-    // glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);            // 3.0+ only
 	SetWindowHints();
-
-	// OLD:
-	// Create window with graphics context
-    // GLFWwindow* window = glfwCreateWindow(1280, 720, "Dear ImGui GLFW+OpenGL3 example", NULL, NULL);
-    // if (window == NULL)
-    //     return 1;
-    // glfwMakeContextCurrent(window);
-    // glfwSwapInterval(1); // Enable vsync
-	// 
-    // // Initialize OpenGL loader
-    // bool err = glewInit() != GLEW_OK;
-	// 
-    // if (err)
-    // {
-    //     fprintf(stderr, "Failed to initialize OpenGL loader!\n");
-    //     return 1;
-    // }
 
 	CreateMainWindow(&gAppState, gSettings);
 	
@@ -129,23 +104,7 @@ int main(int, char**)
 
 	gGrid.Initialize(50.0f, 50, 5);
 
-    // Setup Dear ImGui binding
-	// OLD:
-    // IMGUI_CHECKVERSION();
-    // ImGui::CreateContext();
-    // ImGuiIO& io = ImGui::GetIO(); (void)io;
-    // io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;  // Enable Keyboard Controls
-    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;   // Enable Gamepad Controls
-
-	// OLD:
-    // ImGui_ImplGlfw_InitForOpenGL(window, true);
-    // ImGui_ImplOpenGL3_Init(glsl_version);
 	UIInit();
-
-    // Setup style
-	// OLD:
-    //ImGui::StyleColorsDark();
-    //ImGui::StyleColorsClassic();
 
     // Load Fonts
     // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
@@ -186,11 +145,6 @@ int main(int, char**)
 
 		UpdateFramebufferSize(width, height);
 
-		// OLD
-        // Start the Dear ImGui frame
-        // ImGui_ImplOpenGL3_NewFrame();
-        // ImGui_ImplGlfw_NewFrame();
-        // ImGui::NewFrame();
 		BeginUI();
 
 		BuildGUI(gAppState);
@@ -221,14 +175,6 @@ int main(int, char**)
 	}
 
     // Cleanup
-	// OLD:
-    // ImGui_ImplOpenGL3_Shutdown();
-    // ImGui_ImplGlfw_Shutdown();
-    // ImGui::DestroyContext();
-	// 
-    // glfwDestroyWindow(window);
-    // glfwTerminate();
-
 	ShutdownGFX();
 
     return 0;
@@ -266,7 +212,7 @@ void BuildMenu(volatile AppState& state)
 		{
 			if (ImGui::MenuItem("Open"))
 			{
-				// sSelectedNode = nullptr;
+				sSelectedNode = nullptr;
 				// sSelectedCurve = nullptr;
 				state.OpenFile = true;
 			}
@@ -282,7 +228,6 @@ void BuildMenu(volatile AppState& state)
 
 void BeginUI()
 {
-	//OLD: ImGui_ImplGlfwGL3_NewFrame();
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
@@ -436,7 +381,6 @@ void RenderScene(int width, int height)
 	glm::mat4 model(1.0f);
 	glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 10000.0f);
 
-	// glm::mat4 camera = glm::lookAt(glm::vec3(575.0f, 575.0f, 575.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 view = gCamera.getView();
 
 	glm::mat4 mvp = projection * view * model;
@@ -464,8 +408,6 @@ void RenderScene(int width, int height)
 
 	glUseProgram(0);
 }
-
-ImVec2 gLastMousePosition;
 
 void UpdateMouse(ImGuiIO& io)
 {

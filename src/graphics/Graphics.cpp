@@ -162,10 +162,6 @@ void Swap()
 
 void ShutdownGFX()
 {
-	// OLD:
-	// glfwDestroyWindow(gWindow);
-	// glfwTerminate();
-
 	ImGui_ImplOpenGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
@@ -187,9 +183,6 @@ void SetWindowHints()
 
 void UIInit()
 {
-	// OLD:
-	// ImGui_ImplGlfwGL3_Init(gWindow, false); // We handle UI callbacks elsewhere.
-
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -219,15 +212,11 @@ void UIInit()
 
 void UINewFrame()
 {
-	// OLD:
-	// ImGui_ImplGlfwGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 }
 
 void UIShutdown()
 {
-	// OLD:
-	//	ImGui_ImplGlfwGL3_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 }
 

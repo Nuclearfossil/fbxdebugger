@@ -466,11 +466,7 @@ namespace ImGui
 		// An active popup disable hovering on other windows (apart from its own children)
 		// FIXME-OPT: This could be cached/stored within the window.
 		ImGuiContext& g = *GImGui;
-		// OLD:
-		//if (g.FocusedWindow)
 		if (g.NavWindow)
-			// OLD:
-			// if (ImGuiWindow* focused_root_window = g.FocusedWindow->RootWindow)
 			if (ImGuiWindow* focused_root_window = g.NavWindow->RootWindow)
 				if (focused_root_window->WasActive && focused_root_window != window->RootWindow)
 				{
