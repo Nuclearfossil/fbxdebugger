@@ -30,7 +30,20 @@ Multiple function signature changes, for example (but not limited to):
 
 I've seen a number of methods that have been deprecated and doesn't feel like it's been properly documented. I've made a number of assumtpions, but that is exactly what they are: assumptions.
 
-- 
+- `ImGuiContext` - `FocusedWindow` feels like it's been changed to `NavWindow`
+- `ImGuiContext` - `OsImePosRequest` feels like it's been changed to `PlatformImePos`
+- `ImGuiWindow` - `WindowRectClipped` feels like it's been changed to `OuterRectClipped`
+- On of the widgets I'm porting used `IsItemHovered` but it doesn't feel like there is an appropriate alternative, so I've had to pull in the replacement.
+
+You  can see the last point illustrated in lumix.h:
+
+``` C++
+    // if (ImGui::GetIO().MouseWheel != 0 && ImGui::IsItemHovered())
+    // This also does not work
+    // if (ImGui::GetIO().MouseWheel != 0 && IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem))
+    // And neither does this
+    // if (ImGui::GetIO().MouseWheel != 0 && IsItemHovered())
+```
 
 ## Notes
 

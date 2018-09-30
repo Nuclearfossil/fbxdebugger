@@ -17,10 +17,15 @@ project "Viewer"
     local glewPath = "../extern/glew/"
     local glmPath = "../extern/glm/"
     local fbxPath = "../extern/FBX/"
+    local shaderPath = "../resources/"
+    local buildPath = "../build/"
 
     files {
         imguiPath .. "*.h", imguiPath .. "*.cpp",
-        srcPath .. "**.h", srcPath .. "**.cpp"
+        srcPath .. "**.h", srcPath .. "**.cpp",
+        shaderPath .. "**.hlsl",
+        buildPath .. "*.lua",
+        "../README.md"
     }
 
     includedirs {
