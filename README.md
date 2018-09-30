@@ -2,7 +2,7 @@
 
 just a sandbox for trying some stuff out.
 
-## Migration from ImGui 1.55 to 1.5
+## Migration from ImGui 1.55 to 1.6 (WIP)
 
 So, a lot of things I ran into that isn't necessarily documented.
 
@@ -12,14 +12,81 @@ Things to note:
   - There were a number of significant changes from my old renderer to the one provided with the latest ImGui.
 - This project also uses the FBX sdk - this is outside of the scope of this section.
 
-### OpenGL and GLEW
+### OpenGL and GLFW
 
-Previously, I had my own GLEW-passthrough to handle (and trap) ImGui events so that we don't have keyboard/mouse events
-pass through to keep from moving the camera when the mouse is clicked in the ImGui window. Now we have the inverse, where
-we get mouse and keyboard events from the GLFW ImGui Implementation (`imgui_impl_glfw.h/.cpp).
+Previously, I had my own GLFW-passthrough to handle (and trap) Mouse and Keyboard events and then pass them through to the ImGui handlers. 
 
-This does not mean that we still don't invoke `glfwDestroyWindow`/`glfwTerminate` ourselves, but it does mean we need to invoke
-other methods.
+For example, in my previous codebase, I would register the following GLFW callback:
+
+``` C++
+static void KeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+	{
+		glfwSetWindowShouldClose(window, GL_TRUE);
+		gAppState->ShouldExit = true;
+	}
+
+	int wasCursorKey = -1;
+	switch (key)
+	{
+	case GLFW_KEY_W:
+		wasCursorKey = KEY_W;
+		break;
+	case GLFW_KEY_S:
+		wasCursorKey = KEY_S;
+		break;
+	case GLFW_KEY_A:
+		wasCursorKey = KEY_A;
+		break;
+	case GLFW_KEY_D:
+		wasCursorKey = KEY_D;
+		break;
+	default:
+		break;
+	}
+
+	if (wasCursorKey != -1)
+	{
+		gCurrentKeyState.key[wasCursorKey] = true;
+		gCurrentKeyState.action[wasCursorKey] = action;		
+	}
+	gCurrentKeyState.mods = mods;
+
+	// Pass calls on through to ImGui
+	ImGui_ImplGlfwGL3_KeyCallback(window, key, scancode, action, mods);
+}
+```
+
+Whereas now we have the inverse, where we get mouse and keyboard events from `ImGui::GetIO` and the GLFW ImGui Implementation (`imgui_impl_glfw.h/.cpp).
+
+``` C++
+	// Don't update if the UI has the UI.
+	ImGuiIO& io = ImGui::GetIO();
+
+	if (io.WantCaptureKeyboard || io.WantCaptureMouse)
+	{
+		return;
+	}
+
+	UpdateMouse(io);
+```
+
+and `UpdateMouse` would look like this:
+
+``` C++
+void UpdateMouse(ImGuiIO& io)
+{
+	gMouseInfo.lmb = ImGui::IsMouseDown(0); // 0 - lmb  1 - mmb  2 - rmb
+
+	gMouseInfo.deltaX = io.MouseDelta.x;
+	gMouseInfo.deltaY = io.MouseDelta.y;
+
+	gLastMousePosition = io.MousePos;
+}
+```
+
+This does not mean that we stop invoking `glfwDestroyWindow`/`glfwTerminate` ourselves, but it does mean we need to invoke other methods.
 
 Multiple function signature changes, for example (but not limited to):
 
