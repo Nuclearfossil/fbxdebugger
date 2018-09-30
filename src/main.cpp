@@ -20,8 +20,13 @@
 
 #include "misc/debug.h"
 
+#include "gui/scenegraph.h"
+
 #include <thread>
 #include <fstream>
+
+#include <string>
+#include <sstream>
 
 basicCamera::FreeLookCamera gCamera;
 Grid gGrid;
@@ -32,6 +37,7 @@ volatile AppState gAppState;
 volatile bool gRegenAssets = false;
 
 SceneContainer* gContainer = nullptr;
+VisualSceneGraph gSceneGraph;
 
 ImVec2 gLastMousePosition;
 
@@ -49,6 +55,7 @@ void RenderUI(GLFWwindow* window);
 void RenderScene(int width, int height);
 
 void DisplaySceneInfo();
+void DisplayChildMesh(SceneNodeSharedPtr node);
 void DisplayMeshInfo(volatile AppState& state);
 void DisplaySubModel(NodeSharedPtr submodel);
 
@@ -257,6 +264,37 @@ void DisplaySceneInfo()
 	}
 
 	ImGui::End();
+
+	if (!gAppState.OpenFile)
+	{
+		ImGui::Begin("SceneGraph", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
+		ImGui::BeginChild("SceneGraphScroll", ImVec2(0, 0), true);
+		auto geometry = gSceneGraph.Geometry();
+
+		for each (auto mesh in geometry)
+		{
+			std::stringstream label;
+			label << "Mesh: " << mesh->Name() << "##" << mesh->Id();
+			ImGui::Selectable(label.str().c_str());
+			DisplayChildMesh(mesh);
+		}
+		ImGui::EndChild();
+		ImGui::End();
+	}
+}
+
+void DisplayChildMesh(SceneNodeSharedPtr node)
+{
+	auto children = node->GetChildren();
+	for each (auto child in children)
+	{
+		ImGui::Indent();
+		std::stringstream label;
+		label << "Mesh: " << child->Name() << "##" << child->Id();
+		ImGui::Selectable(label.str().c_str());
+		DisplayChildMesh(child);
+		ImGui::Unindent();
+	}
 }
 
 void DisplayMeshInfo(volatile AppState& state)
@@ -367,6 +405,8 @@ void ProcessingThread()
 				gContainer = new SceneContainer();
 				gContainer->LoadFile(filename);
 				gContainer->Process();
+
+				gSceneGraph.Build(gContainer);
 				
 				gRegenAssets = true;
 				gAppState.OpenFile = false;
