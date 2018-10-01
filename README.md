@@ -112,6 +112,11 @@ You  can see the last point illustrated in lumix.h:
     // if (ImGui::GetIO().MouseWheel != 0 && IsItemHovered())
 ```
 
+### lumix.h
+
+The current curve editor was pulled from the Lumix engine (https://github.com/nem0/LumixEngine). There used to be a fair number of other functions in there, 
+but as I'm not currently using them, I'd rather not maintain them.
+
 ## Notes
 
 This project used the FBX sdk - due to file size, you'll need to grab the FBX sdk yourself and put it into extern/fbx.

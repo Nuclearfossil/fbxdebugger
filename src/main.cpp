@@ -249,6 +249,8 @@ void BuildGUI(volatile AppState& state)
 	DisplayAnimationInfo();
 }
 
+static unsigned int sSelectedId = 0;
+
 void DisplaySceneInfo()
 {
 	ImGui::Begin("Scene", nullptr, ImGuiWindowFlags_HorizontalScrollbar);
@@ -265,22 +267,27 @@ void DisplaySceneInfo()
 
 	ImGui::End();
 
-	if (!gAppState.OpenFile)
+	ImGui::Begin("SceneGraph", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
+	ImGui::BeginChild("SceneGraphScroll", ImVec2(0, 0), true);
+	if (gAppState.OpenFile)
 	{
-		ImGui::Begin("SceneGraph", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
-		ImGui::BeginChild("SceneGraphScroll", ImVec2(0, 0), true);
+		ImGui::Text("Loading FBX");
+	}
+	else
+	{
 		auto geometry = gSceneGraph.Geometry();
 
 		for each (auto mesh in geometry)
 		{
 			std::stringstream label;
 			label << "Mesh: " << mesh->Name() << "##" << mesh->Id();
-			ImGui::Selectable(label.str().c_str());
+			if (ImGui::Selectable(label.str().c_str(), sSelectedId == mesh->Id())) { sSelectedId = mesh->Id(); }
 			DisplayChildMesh(mesh);
 		}
-		ImGui::EndChild();
-		ImGui::End();
 	}
+
+	ImGui::EndChild();
+	ImGui::End();
 }
 
 void DisplayChildMesh(SceneNodeSharedPtr node)
@@ -291,7 +298,7 @@ void DisplayChildMesh(SceneNodeSharedPtr node)
 		ImGui::Indent();
 		std::stringstream label;
 		label << "Mesh: " << child->Name() << "##" << child->Id();
-		ImGui::Selectable(label.str().c_str());
+		if (ImGui::Selectable(label.str().c_str(), sSelectedId == child->Id())) { sSelectedId = child->Id(); }
 		DisplayChildMesh(child);
 		ImGui::Unindent();
 	}
