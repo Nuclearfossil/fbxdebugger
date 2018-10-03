@@ -21,6 +21,7 @@ public:
 	FbxScene* GetScene() { return mScene; }
 
 	std::vector<NodeSharedPtr> GetMeshs() { return mSceneModels; }
+	std::vector<NodeSharedPtr> GetCameras() { return mCameras; }
 	std::vector<NodeSharedPtr> GetHierarchy() { return mHierarchy; }
 
 	std::vector<FbxTakeInfo> GetTakeList() { return mFBXTakeList; }
@@ -49,6 +50,7 @@ private:
 	bool mCanRender;
 
 	std::vector<NodeSharedPtr> mSceneModels;
+	std::vector<NodeSharedPtr> mCameras;
 	std::vector<TakeSharedPtr> mTakes;
 	std::vector<NodeSharedPtr> mHierarchy;
 

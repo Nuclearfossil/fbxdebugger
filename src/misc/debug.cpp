@@ -8,6 +8,8 @@
 #include <string>
 #include <sstream>
 
+void DisplayCurve(const char* label, FbxAnimCurve* curve);
+
 const char* TrackLayerNames[][2] =
 {
 	{"Translation X", "TX"}
@@ -21,18 +23,22 @@ const char* TrackLayerNames[][2] =
 	, { "Scale Z", "SZ"}
 };
 
-void ProcessAnimLayer(FbxNode* node, FbxAnimStack* animStack, int animIndex)
+void ProcessCameraAnimLayer(FbxNodeAttribute* attr, FbxAnimStack* animStack, FbxAnimLayer* layer)
 {
+	FbxNode* node = attr->GetNode();
+	// We handle Camera data a bit differently than other anim node types
+	FbxCamera* camera = FbxCast<FbxCamera>(attr);
 
-	std::stringstream layerLabel;
-	FbxAnimLayer* layer = animStack->GetSrcObject<FbxAnimLayer>(animIndex);
-	layerLabel << "Layer: " << layer->GetName() << "##" << animStack->GetUniqueID() << "##" << animIndex;
-	if (ImGui::CollapsingHeader(layerLabel.str().c_str()))
+	if (camera == nullptr && node == nullptr) return;
+
+	std::stringstream label;
+	label << "Camera: " << attr->GetName();
+	if (ImGui::TreeNode(label.str().c_str()))
 	{
-		std::stringstream nodeLabel;
-		nodeLabel << "Root Mesh: " << node->GetName() << "##" << animStack->GetName() << "##" << layer->GetName() << animIndex;
-		if (ImGui::TreeNode(nodeLabel.str().c_str()))
+		if (node != nullptr)
 		{
+			ProcessAnimLayer(node, animStack, layer);
+			// and any children
 			unsigned __int32 modelCount = SizeT2Int32(node->GetChildCount());
 			if (modelCount > 0)
 			{
@@ -43,17 +49,54 @@ void ProcessAnimLayer(FbxNode* node, FbxAnimStack* animStack, int animIndex)
 				}
 			}
 
-			DisplayCurveData(node, layer);
+		}
 
+
+		FbxAnimCurve* animCurve = nullptr;
+
+		animCurve = camera->FieldOfView.GetCurve(layer);
+		if ((animCurve != nullptr) && ImGui::TreeNode("FOV", "%s : FOV", camera->GetName()))
+		{
+			DisplayCurve("FOV", animCurve);
 			ImGui::TreePop();
 		}
+
+		animCurve = camera->FieldOfViewX.GetCurve(layer);
+		if ((animCurve != nullptr) && ImGui::TreeNode("FOVX", "%s : FOVX", camera->GetName()))
+		{
+			DisplayCurve("FOVX", animCurve);
+			ImGui::TreePop();
+		}
+
+		animCurve = camera->FieldOfViewY.GetCurve(layer);
+		if ((animCurve != nullptr) && ImGui::TreeNode("FOVY", "%s : FOVY", camera->GetName()))
+		{
+			DisplayCurve("FOVY", animCurve);
+			ImGui::TreePop();
+		}
+
+		animCurve = camera->Position.GetCurve(layer);
+		if ((animCurve != nullptr) && ImGui::TreeNode("Position", "%s : Position", camera->GetName()))
+		{
+			DisplayCurve("Position", animCurve);
+			ImGui::TreePop();
+		}
+
+		animCurve = camera->FocalLength.GetCurve(layer);
+		if ((animCurve != nullptr) && ImGui::TreeNode("FocalLength", "%s : Focal length", camera->GetName()))
+		{
+			DisplayCurve("FocalLength", animCurve);
+			ImGui::TreePop();
+		}
+
+		ImGui::TreePop();
 	}
 }
 
-void ProcessAnimChildNode(FbxNode* node, FbxAnimStack* animStack, FbxAnimLayer* layer)
+void ProcessAnimLayer(FbxNode* node, FbxAnimStack* animStack, FbxAnimLayer* layer)
 {
 	std::stringstream nodeLabel;
-	nodeLabel << "Mesh: " << node->GetName() << "##" << animStack->GetUniqueID() << "##" << layer->GetName();
+	nodeLabel << node->GetName() << "##" << animStack->GetName() << "##" << layer->GetName();
 	if (ImGui::TreeNode(nodeLabel.str().c_str()))
 	{
 		unsigned __int32 modelCount = SizeT2Int32(node->GetChildCount());
@@ -70,7 +113,28 @@ void ProcessAnimChildNode(FbxNode* node, FbxAnimStack* animStack, FbxAnimLayer* 
 
 		ImGui::TreePop();
 	}
+}
 
+void ProcessAnimChildNode(FbxNode* node, FbxAnimStack* animStack, FbxAnimLayer* layer)
+{
+	std::stringstream nodeLabel;
+	nodeLabel << "Node: " << node->GetName() << "##" << animStack->GetUniqueID() << "##" << layer->GetName();
+	if (ImGui::TreeNode(nodeLabel.str().c_str()))
+	{
+		unsigned __int32 modelCount = SizeT2Int32(node->GetChildCount());
+		if (modelCount > 0)
+		{
+			for (unsigned _int32 index = 0; index < modelCount; index++)
+			{
+				FbxNode* child = node->GetChild(index);
+				ProcessAnimChildNode(child, animStack, layer);
+			}
+		}
+
+		DisplayCurveData(node, layer);
+
+		ImGui::TreePop();
+	}
 }
 
 void DisplayCurve(const char* label, FbxAnimCurve* curve)
