@@ -6,7 +6,7 @@ workspace "FbxDebugger"
 
 project "Viewer"
     location "sln/viewer"
-    kind "ConsoleApp"    
+    kind "ConsoleApp"
     language "C++"
     system "windows"
     targetdir "targets/%{cfg.buildcfg}"
@@ -42,7 +42,7 @@ project "Viewer"
         links {"d3d11.lib", "d3dcompiler.lib", "dxgi.lib", "opengl32.lib", "glfw3.lib", "glew32sd.lib", "libfbxsdk-md.lib"}
         defines {"DEBUG"}
         symbols "On"
-        libdirs { 
+        libdirs {
             glfwPath .. "lib/static/v140/x64",
             glewPath .. "lib/Debug/x64",
             fbxPath .. "lib/vs2015/x64/Debug"
@@ -55,7 +55,7 @@ project "Viewer"
         links {"d3d11.lib", "d3dcompiler.lib", "dxgi.lib", "opengl32.lib", "glfw3.lib", "glew32s.lib", "libfbxsdk-md.lib"}
         defines {"NDEBUG"}
         optimize "On"
-        libdirs { 
+        libdirs {
             glfwPath .. "lib/static/v140/x64",
             glewPath .. "lib/Release/x64",
             fbxPath .. "lib/vs2015/x64/Release"
