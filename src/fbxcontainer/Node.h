@@ -9,6 +9,7 @@ class Program;
 namespace fbxsdk
 {
 	class FbxNode;
+	class FbxNodeAttribute;
 }
 
 typedef std::shared_ptr<Node> NodeSharedPtr;
@@ -16,7 +17,10 @@ typedef std::shared_ptr<Node> NodeSharedPtr;
 class Node
 {
 public:
-	Node() {}
+	Node()
+	{
+		NodeType = "Node";
+	}
 	~Node() {}
 
 	virtual void Render(bool highlighted, Program* program) {}
@@ -26,7 +30,9 @@ public:
 	virtual void Debug() {}
 
 	std::string Name;
+	std::string NodeType;
 	fbxsdk::FbxNode* FbxNodeRef;
+	fbxsdk::FbxNodeAttribute* FbxNodeAttr;
 
 	std::vector<NodeSharedPtr> Children;
 };

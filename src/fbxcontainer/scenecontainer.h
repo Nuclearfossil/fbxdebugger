@@ -21,17 +21,19 @@ public:
 	FbxScene* GetScene() { return mScene; }
 
 	std::vector<NodeSharedPtr> GetMeshs() { return mSceneModels; }
+	std::vector<NodeSharedPtr> GetCameras() { return mCameras; }
 	std::vector<NodeSharedPtr> GetHierarchy() { return mHierarchy; }
 
 	std::vector<FbxTakeInfo> GetTakeList() { return mFBXTakeList; }
 	std::vector<FbxAnimStack*> GetAnimStack() { return mFBXAnimStackList; }
 
-	bool BuildModels(FbxNode* node, NodeSharedPtr modelSharedPtr);
+	bool BuildModels(FbxNode* node, NodeSharedPtr& modelSharedPtr);
 	void BuildAnimation();
 
 	bool Process();
 
 	void BuildRenderable();
+	void BuildRenderables(NodeSharedPtr node);
 	void RenderAll(NodeSharedPtr selected, Program* program);
 
 private:
@@ -49,6 +51,7 @@ private:
 	bool mCanRender;
 
 	std::vector<NodeSharedPtr> mSceneModels;
+	std::vector<NodeSharedPtr> mCameras;
 	std::vector<TakeSharedPtr> mTakes;
 	std::vector<NodeSharedPtr> mHierarchy;
 

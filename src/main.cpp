@@ -91,16 +91,16 @@ int main(int, char**)
 	// Initialize our processing thread
 	std::thread processor(ProcessingThread);
 
-    // Setup window
+	// Setup window
 	if (!InitGfxSubsystem())
 		return -1;
 
 	SetWindowHints();
 
 	CreateMainWindow(&gAppState, gSettings);
-	
+
 	GetWindow();
-	
+
 	InitRenderState();
 
 	gCamera.setPosition(glm::vec3(10.0f, 10.0f, 10.0f));
@@ -113,39 +113,39 @@ int main(int, char**)
 
 	UIInit();
 
-    // Load Fonts
-    // - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
-    // - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
-    // - If the file cannot be loaded, the function will return NULL. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
-    // - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
-    // - Read 'misc/fonts/README.txt' for more instructions and details.
-    // - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
-    //io.Fonts->AddFontDefault();
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
-    //io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
-    //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
-    //IM_ASSERT(font != NULL);
+	// Load Fonts
+	// - If no fonts are loaded, dear imgui will use the default font. You can also load multiple fonts and use ImGui::PushFont()/PopFont() to select them.
+	// - AddFontFromFileTTF() will return the ImFont* so you can store it if you need to select the font among multiple.
+	// - If the file cannot be loaded, the function will return NULL. Please handle those errors in your application (e.g. use an assertion, or display an error and quit).
+	// - The fonts will be rasterized at a given size (w/ oversampling) and stored into a texture when calling ImFontAtlas::Build()/GetTexDataAsXXXX(), which ImGui_ImplXXXX_NewFrame below will call.
+	// - Read 'misc/fonts/README.txt' for more instructions and details.
+	// - Remember that in C/C++ if you want to include a backslash \ in a string literal you need to write a double backslash \\ !
+	//io.Fonts->AddFontDefault();
+	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Roboto-Medium.ttf", 16.0f);
+	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/Cousine-Regular.ttf", 15.0f);
+	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/DroidSans.ttf", 16.0f);
+	//io.Fonts->AddFontFromFileTTF("../../misc/fonts/ProggyTiny.ttf", 10.0f);
+	//ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, NULL, io.Fonts->GetGlyphRangesJapanese());
+	//IM_ASSERT(font != NULL);
 
 	glfwSetTime(0.0);
 
 	double lastFrameTime = glfwGetTime();
 
 	GLFWwindow* window = GetWindow();
-    // Main loop
-    while (!glfwWindowShouldClose(window) && !gAppState.ShouldExit)
-    {
+	// Main loop
+	while (!glfwWindowShouldClose(window) && !gAppState.ShouldExit)
+	{
 		int width, height;
 
 		double currentTime = glfwGetTime();
 
-        // Poll and handle events (inputs, window resize, etc.)
-        // You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
-        // - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
-        // - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
-        // Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
-        glfwPollEvents();
+		// Poll and handle events (inputs, window resize, etc.)
+		// You can read the io.WantCaptureMouse, io.WantCaptureKeyboard flags to tell if dear imgui wants to use your inputs.
+		// - When io.WantCaptureMouse is true, do not dispatch mouse input data to your main application.
+		// - When io.WantCaptureKeyboard is true, do not dispatch keyboard input data to your main application.
+		// Generally you may always pass all inputs to dear imgui, and hide them from your application based on those two flags.
+		glfwPollEvents();
 
 		Update(currentTime - lastFrameTime);
 		lastFrameTime = currentTime;
@@ -173,7 +173,7 @@ int main(int, char**)
 			gRegenAssets = false;
 		}
 
-    }
+	}
 
 	// Shut down processing thread
 	if (processor.joinable())
@@ -181,10 +181,10 @@ int main(int, char**)
 		processor.detach();
 	}
 
-    // Cleanup
+	// Cleanup
 	ShutdownGFX();
 
-    return 0;
+	return 0;
 }
 
 void InitApp()
@@ -245,7 +245,7 @@ void BuildGUI(volatile AppState& state)
 	BuildMenu(state);
 
 	DisplaySceneInfo();
- 
+
 	DisplayAnimationInfo();
 }
 
@@ -265,28 +265,6 @@ void DisplaySceneInfo()
 		DisplayMeshInfo(gAppState);
 	}
 
-	ImGui::End();
-
-	ImGui::Begin("SceneGraph", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
-	ImGui::BeginChild("SceneGraphScroll", ImVec2(0, 0), true);
-	if (gAppState.OpenFile)
-	{
-		ImGui::Text("Loading FBX");
-	}
-	else
-	{
-		auto geometry = gSceneGraph.Geometry();
-
-		for each (auto mesh in geometry)
-		{
-			std::stringstream label;
-			label << "Mesh: " << mesh->Name() << "##" << mesh->Id();
-			if (ImGui::Selectable(label.str().c_str(), sSelectedId == mesh->Id())) { sSelectedId = mesh->Id(); }
-			DisplayChildMesh(mesh);
-		}
-	}
-
-	ImGui::EndChild();
 	ImGui::End();
 }
 
@@ -317,12 +295,14 @@ void DisplayMeshInfo(volatile AppState& state)
 		for each (NodeSharedPtr var in models)
 		{
 			ModelSharedPtr model = std::dynamic_pointer_cast<Model>(var);
-			for each (std::string attribName in model->AttributeNames)
+			if (model != nullptr)
 			{
-				ImGui::Text("Attribute: %s", attribName.c_str());
+				for each (std::string attribName in model->AttributeNames)
+				{
+					ImGui::Text("Attribute: %s", attribName.c_str());
+				}
 			}
-
-			DisplaySubModel(model);
+			DisplaySubModel(var);
 		}
 
 		ImGui::EndChild();
@@ -332,7 +312,9 @@ void DisplayMeshInfo(volatile AppState& state)
 void DisplaySubModel(NodeSharedPtr submodel)
 {
 	ImGui::Indent();
-	if (ImGui::Selectable(submodel->Name.c_str(), sSelectedNode == submodel))
+	std::stringstream label;
+	label << submodel->NodeType.c_str() << ": " << submodel->Name.c_str();
+	if (ImGui::Selectable(label.str().c_str(), sSelectedNode == submodel))
 		sSelectedNode = submodel;
 
 	int childCount = SizeT2Int32(submodel->Children.size());
@@ -370,16 +352,31 @@ void DisplayAnimationInfo()
 
 			for each (auto animStack in gContainer->GetAnimStack())
 			{
-				if (ImGui::CollapsingHeader(animStack->GetName()))
+				const char* animStackName = animStack->GetName();
+				if (ImGui::CollapsingHeader(animStackName))
 				{
 					unsigned __int32 animLayerCount = SizeT2Int32(animStack->GetMemberCount<FbxAnimLayer>());
 
 					ImGui::Indent();
 					for (unsigned __int32 animLayerIndex = 0; animLayerIndex < animLayerCount; animLayerIndex++)
 					{
-						for each (auto mesh in gContainer->GetMeshs())
+						std::stringstream layerLabel;
+						FbxAnimLayer* layer = animStack->GetSrcObject<FbxAnimLayer>(animLayerIndex);
+						layerLabel << "Layer: " << layer->GetName() << "##" << animStack->GetUniqueID();
+						if (ImGui::TreeNode(layerLabel.str().c_str()))
 						{
-							ProcessAnimLayer(mesh->FbxNodeRef, animStack, animLayerIndex);
+							// Do we have any cameras?
+							for each (auto camera in gContainer->GetCameras())
+							{
+								ProcessCameraAnimLayer(camera->FbxNodeAttr, animStack, layer);
+							}
+
+							for each (auto mesh in gContainer->GetMeshs())
+							{
+								ProcessAnimLayer(mesh->FbxNodeRef, animStack, layer);
+							}
+
+							ImGui::TreePop();
 						}
 					}
 					ImGui::Unindent();
@@ -414,7 +411,7 @@ void ProcessingThread()
 				gContainer->Process();
 
 				gSceneGraph.Build(gContainer);
-				
+
 				gRegenAssets = true;
 				gAppState.OpenFile = false;
 			}

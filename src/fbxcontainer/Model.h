@@ -26,6 +26,7 @@ public:
 		AttributeCount = 0;
 		Selected = false;
 		FbxNodeRef = nullptr;
+		NodeType = "Model";
 	}
 
 	~Model()
