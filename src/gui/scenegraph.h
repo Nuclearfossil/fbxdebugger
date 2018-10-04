@@ -9,11 +9,19 @@
 // forward Declarations
 class VisualSceneNode;
 class Component;
+class MeshComponent;
 class SceneContainer;
+
+namespace fbxsdk
+{
+	class FbxImporter;
+	class FbxScene;
+}
 
 // Typedefs for shared pointers
 typedef std::shared_ptr<VisualSceneNode> SceneNodeSharedPtr;
 typedef std::shared_ptr<Component> ComponentSharedPtr;
+typedef std::shared_ptr<MeshComponent> MeshComponentSharedPtr;
 
 class Component
 {
@@ -21,7 +29,48 @@ public:
 	Component() {}
 	~Component() {}
 
-	bool Update() { return false; }
+	virtual bool Update() = 0;
+
+	std::string TypeName; // Replace with a hash at some point (or enum)
+};
+
+class MeshComponent : public Component
+{
+public:
+	MeshComponent() 
+	{
+		TypeName = "MeshComponent";
+	}
+	~MeshComponent() {}
+
+	void Init();
+	virtual bool Update() override;
+};
+
+class CameraComponent : public Component
+{
+public:
+	CameraComponent() 
+	{
+		TypeName = "CameraComponent";
+	};
+	~CameraComponent() {}
+
+	void Init();
+	virtual bool Update() override;
+};
+
+class SkeletonComponent : public Component
+{
+public:
+	SkeletonComponent()
+	{
+		TypeName = "SkeletonComponent";
+	}
+	~SkeletonComponent() {}
+
+	void Init();
+	virtual bool Update() override;
 };
 
 class VisualSceneNode
@@ -29,6 +78,8 @@ class VisualSceneNode
 public:
 	VisualSceneNode();
 	~VisualSceneNode();
+
+	void Setup(FbxNode* fbxNode);
 
 	void Name(const char* value);
 	void Name(const std::string value);
@@ -38,6 +89,8 @@ public:
 	void AddChild(SceneNodeSharedPtr child);
 	std::vector<SceneNodeSharedPtr> GetChildren() { return mChildren; }
 
+	std::vector<ComponentSharedPtr> GetComponents() { return mComponents; }
+
 	void SetPosition(float x, float y, float z);
 	glm::vec3 GetPosition();
 
@@ -46,8 +99,6 @@ public:
 
 	void SetScale(float x, float y, float z);
 	glm::vec3 GetScale();
-
-	NodeSharedPtr Mesh;
 
 private:
 	unsigned int mId;
@@ -69,16 +120,15 @@ public:
 	VisualSceneGraph();
 	~VisualSceneGraph();
 
-	void Build(SceneContainer* container);
-	std::vector<SceneNodeSharedPtr> Geometry() { return mGeometry; }
+	void Build(FbxImporter* importer, FbxScene* scene);
+
+	std::vector<SceneNodeSharedPtr> Children() { return mSceneGraph; }
 
 private:
 	void Reset();
-	void BuildGeometryTree(std::vector<NodeSharedPtr> meshNodes);
-	void BuildSceneTreeFromMeshNode(SceneNodeSharedPtr sceneNode, NodeSharedPtr mesh);
 
 private:
-	std::vector<SceneNodeSharedPtr> mGeometry;
+	std::vector<SceneNodeSharedPtr> mSceneGraph;
 	std::vector<SceneNodeSharedPtr> mAnimations;
 
 };

@@ -11,6 +11,10 @@ std::atomic<unsigned int> IdIncrementor;
 VisualSceneNode::VisualSceneNode() 
 {
 	mId = IdIncrementor++;
+	SetPosition(0.0f, 0.0f, 0.0f);
+	SetRotation(0.0f, 0.0f, 0.0f);
+	SetScale(0.0f, 0.0f, 0.0f);
+
 	mName = std::to_string(mId);
 }
 
@@ -75,46 +79,154 @@ glm::vec3 VisualSceneNode::GetScale()
 VisualSceneGraph::VisualSceneGraph() {}
 VisualSceneGraph::~VisualSceneGraph() {}
 
-void VisualSceneGraph::Build(SceneContainer* container)
+void VisualSceneGraph::Build(FbxImporter* importer, FbxScene* scene)
 {
-	if (container == nullptr)
-	{
-		return;
-	}
+	FbxNode* rootNode = scene->GetRootNode();
+	if (rootNode == nullptr) return;
 
-	// Clean up anything lying around
 	Reset();
 
-	// Build up the animation list
-	BuildGeometryTree(container->GetMeshs());
+	int rootNodeCount = rootNode->GetChildCount();
+
+	for (int index = 0; index < rootNodeCount; index++)
+	{
+		auto node = rootNode->GetChild(index);
+
+		SceneNodeSharedPtr sceneNode(new VisualSceneNode());
+		sceneNode->Setup(node);
+
+		mSceneGraph.push_back(sceneNode);
+	}
+}
+
+void VisualSceneNode::Setup(FbxNode* fbxNode)
+{
+	Name(fbxNode->GetNameOnly());
+	auto position = fbxNode->GeometricTranslation.Get();
+	auto rotation = fbxNode->GeometricRotation.Get();
+	auto scale = fbxNode->GeometricScaling.Get();
+	SetPosition(position[0], position[1], position[2]);
+	SetRotation(rotation[0], rotation[1], rotation[2]);
+	SetScale(scale[0], scale[1], scale[2]);
+
+	// What component to we want to add?
+	// we currently support two - Triangulated Mesh and Camera
+	// anything else should be considered a null (for now)
+
+	int attributeCount = fbxNode->GetNodeAttributeCount();
+	for (int attributeIndex = 0; attributeIndex < attributeCount; attributeIndex++)
+	{
+		FbxNodeAttribute* attrib = fbxNode->GetNodeAttributeByIndex(attributeIndex);
+
+		if (attrib != nullptr)
+		{
+			FbxNodeAttribute::EType attribType = fbxNode->GetNodeAttribute()->GetAttributeType();
+
+			switch (attribType)
+			{
+			case fbxsdk::FbxNodeAttribute::eUnknown:
+				break;
+			case fbxsdk::FbxNodeAttribute::eNull:
+				break;
+			case fbxsdk::FbxNodeAttribute::eMarker:
+				break;
+			case fbxsdk::FbxNodeAttribute::eSkeleton:
+			{
+				ComponentSharedPtr component(new SkeletonComponent());
+				mComponents.push_back(component);
+			}
+			break;
+			case fbxsdk::FbxNodeAttribute::eMesh:
+			{
+				ComponentSharedPtr component(new MeshComponent());
+				mComponents.push_back(component);
+			}
+				break;
+			case fbxsdk::FbxNodeAttribute::eNurbs:
+				break;
+			case fbxsdk::FbxNodeAttribute::ePatch:
+				break;
+			case fbxsdk::FbxNodeAttribute::eCamera:
+			{
+				ComponentSharedPtr component(new CameraComponent());
+				mComponents.push_back(component);
+			}
+				break;
+			case fbxsdk::FbxNodeAttribute::eCameraStereo:
+				break;
+			case fbxsdk::FbxNodeAttribute::eCameraSwitcher:
+				break;
+			case fbxsdk::FbxNodeAttribute::eLight:
+				break;
+			case fbxsdk::FbxNodeAttribute::eOpticalReference:
+				break;
+			case fbxsdk::FbxNodeAttribute::eOpticalMarker:
+				break;
+			case fbxsdk::FbxNodeAttribute::eNurbsCurve:
+				break;
+			case fbxsdk::FbxNodeAttribute::eTrimNurbsSurface:
+				break;
+			case fbxsdk::FbxNodeAttribute::eBoundary:
+				break;
+			case fbxsdk::FbxNodeAttribute::eNurbsSurface:
+				break;
+			case fbxsdk::FbxNodeAttribute::eShape:
+				break;
+			case fbxsdk::FbxNodeAttribute::eLODGroup:
+				break;
+			case fbxsdk::FbxNodeAttribute::eSubDiv:
+				break;
+			case fbxsdk::FbxNodeAttribute::eCachedEffect:
+				break;
+			case fbxsdk::FbxNodeAttribute::eLine:
+				break;
+			default:
+				break;
+			}
+		}
+	}
+
+	int childCount = fbxNode->GetChildCount();
+	for (int index = 0; index < childCount; index++)
+	{
+		SceneNodeSharedPtr child(new VisualSceneNode());
+		child->Setup(fbxNode->GetChild(index));
+		AddChild(child);
+	}
 }
 
 void VisualSceneGraph::Reset()
 {
-	mGeometry.clear();
+	mSceneGraph.clear();
 	mAnimations.clear();
 }
 
-void VisualSceneGraph::BuildGeometryTree(std::vector<NodeSharedPtr> meshNodes)
+void MeshComponent::Init()
 {
-	for each (auto mesh in meshNodes)
-	{
-		SceneNodeSharedPtr sceneNode(new VisualSceneNode());
-		BuildSceneTreeFromMeshNode(sceneNode, mesh);
-		mGeometry.push_back(sceneNode);
-	}
+
+}
+bool MeshComponent::Update()
+{
+	return false;
 }
 
-void VisualSceneGraph::BuildSceneTreeFromMeshNode(SceneNodeSharedPtr rootNode, NodeSharedPtr mesh)
+void CameraComponent::Init()
 {
-	// First, populate the sceneNode with the right data from the mesh
-	rootNode->Name(mesh->Name);
-	rootNode->Mesh = mesh;
 
-	for each (auto child in mesh->Children)
-	{
-		SceneNodeSharedPtr sceneNode(new VisualSceneNode());
-		BuildSceneTreeFromMeshNode(sceneNode, child);
-		rootNode->AddChild(sceneNode);
-	}
+}
+
+bool CameraComponent::Update()
+{
+	return false;
+}
+
+
+void SkeletonComponent::Init()
+{
+
+}
+
+bool SkeletonComponent::Update()
+{
+	return false;
 }

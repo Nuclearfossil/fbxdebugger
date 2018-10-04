@@ -266,6 +266,38 @@ void DisplaySceneInfo()
 	}
 
 	ImGui::End();
+
+	ImGui::Begin("Visual Scene", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
+	if (gAppState.OpenFile)
+	{
+		ImGui::Text("Loading FBX");
+	}
+	else
+	{
+		auto children = gSceneGraph.Children();
+		for each (auto visualSceneNode in children)
+		{
+			ImGui::Indent();
+			std::stringstream label;
+			label << visualSceneNode->Name() << "##" << visualSceneNode->Id();
+			if (ImGui::Selectable(label.str().c_str(), sSelectedId == visualSceneNode->Id())) { sSelectedId = visualSceneNode->Id(); }
+
+			if (visualSceneNode->GetComponents().size() > 0)
+			{
+				auto components = visualSceneNode->GetComponents();
+				ImGui::Indent();
+				for each (auto component in components)
+				{
+					ImGui::Text("Component: %s", component->TypeName.c_str());
+				}
+				ImGui::Unindent();
+			}
+
+			DisplayChildMesh(visualSceneNode);
+			ImGui::Unindent();
+		}
+	}
+	ImGui::End();
 }
 
 void DisplayChildMesh(SceneNodeSharedPtr node)
@@ -275,8 +307,18 @@ void DisplayChildMesh(SceneNodeSharedPtr node)
 	{
 		ImGui::Indent();
 		std::stringstream label;
-		label << "Mesh: " << child->Name() << "##" << child->Id();
+		label << child->Name() << "##" << child->Id();
 		if (ImGui::Selectable(label.str().c_str(), sSelectedId == child->Id())) { sSelectedId = child->Id(); }
+		if (child->GetComponents().size() > 0)
+		{
+			auto components = child->GetComponents();
+			ImGui::Indent();
+			for each (auto component in components)
+			{
+				ImGui::Text("Component: %s", component->TypeName.c_str());
+			}
+			ImGui::Unindent();
+		}
 		DisplayChildMesh(child);
 		ImGui::Unindent();
 	}
@@ -414,7 +456,8 @@ void ProcessingThread()
 				gContainer->LoadFile(filename);
 				gContainer->Process();
 
-				gSceneGraph.Build(gContainer);
+				//gSceneGraph.Build(gContainer);
+				gSceneGraph.Build(gContainer->GetImporter(), gContainer->GetScene());
 
 				gRegenAssets = true;
 				gAppState.OpenFile = false;
