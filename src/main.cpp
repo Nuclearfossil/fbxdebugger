@@ -264,23 +264,6 @@ void DisplaySceneInfo()
 	}
 
 	ImGui::End();
-
-	if (!gAppState.OpenFile)
-	{
-		ImGui::Begin("SceneGraph", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
-		ImGui::BeginChild("SceneGraphScroll", ImVec2(0, 0), true);
-		auto geometry = gSceneGraph.Geometry();
-
-		for each (auto mesh in geometry)
-		{
-			std::stringstream label;
-			label << "Mesh: " << mesh->Name() << "##" << mesh->Id();
-			ImGui::Selectable(label.str().c_str());
-			DisplayChildMesh(mesh);
-		}
-		ImGui::EndChild();
-		ImGui::End();
-	}
 }
 
 void DisplayChildMesh(SceneNodeSharedPtr node)
@@ -310,12 +293,14 @@ void DisplayMeshInfo(volatile AppState& state)
 		for each (NodeSharedPtr var in models)
 		{
 			ModelSharedPtr model = std::dynamic_pointer_cast<Model>(var);
-			for each (std::string attribName in model->AttributeNames)
+			if (model != nullptr)
 			{
-				ImGui::Text("Attribute: %s", attribName.c_str());
+				for each (std::string attribName in model->AttributeNames)
+				{
+					ImGui::Text("Attribute: %s", attribName.c_str());
+				}
 			}
-
-			DisplaySubModel(model);
+			DisplaySubModel(var);
 		}
 
 		ImGui::EndChild();
@@ -325,7 +310,9 @@ void DisplayMeshInfo(volatile AppState& state)
 void DisplaySubModel(NodeSharedPtr submodel)
 {
 	ImGui::Indent();
-	if (ImGui::Selectable(submodel->Name.c_str(), sSelectedNode == submodel))
+	std::stringstream label;
+	label << submodel->NodeType.c_str() << ": " << submodel->Name.c_str();
+	if (ImGui::Selectable(label.str().c_str(), sSelectedNode == submodel))
 		sSelectedNode = submodel;
 
 	int childCount = SizeT2Int32(submodel->Children.size());

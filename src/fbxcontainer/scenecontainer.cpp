@@ -3,6 +3,8 @@
 #include "misc/Utils.h"
 //#include "graphics/Program.h"
 
+#include "Camera.h"
+
 #include <fbxsdk.h>
 #include <iostream>
 
@@ -56,7 +58,7 @@ bool SceneContainer::Process()
 
 	for (int index = 0; index < rootNodeCount; index++)
 	{
-		NodeSharedPtr model(new Model());
+		NodeSharedPtr model(new Node());
 		if (BuildModels(rootNode->GetChild(index), model))
 			mSceneModels.push_back(model);
 	}
@@ -206,12 +208,26 @@ void SceneContainer::BindModelAttributes(ModelSharedPtr model, FbxNode* node)
 	}
 }
 
-bool SceneContainer::BuildModels(FbxNode* node, NodeSharedPtr modelSharedPtr)
+bool SceneContainer::BuildModels(FbxNode* node, NodeSharedPtr& modelSharedPtr)
 {
-	bool retval = false;
+	bool retval = true;
 	modelSharedPtr->FbxNodeRef = node;
+	modelSharedPtr->Name = node->GetNameOnly();
 
 	int attributeCount = node->GetNodeAttributeCount();
+	if (attributeCount == 0)
+	{
+		int childCount = node->GetChildCount();
+		for (int index = 0; index < childCount; index++)
+		{
+			NodeSharedPtr childModel(new Model());
+			BuildModels(node->GetChild(index), childModel);
+
+			modelSharedPtr->Children.push_back(childModel);
+		}
+
+		return retval;
+	}
 
 	for (int index = 0; index < attributeCount; index++)
 	{
@@ -224,9 +240,12 @@ bool SceneContainer::BuildModels(FbxNode* node, NodeSharedPtr modelSharedPtr)
 		if (attribType == FbxNodeAttribute::eMesh)
 		{
 			ModelSharedPtr model = std::dynamic_pointer_cast<Model>(modelSharedPtr);
-			model->Name = node->GetNameOnly();
-			// Do other stuff with the model
-			BindModelAttributes(model, node);
+
+			if (model != nullptr)
+			{
+				// Do other stuff with the model
+				BindModelAttributes(model, node);
+			}
 
 			// and look for children
 			int childCount = node->GetChildCount();
@@ -235,22 +254,39 @@ bool SceneContainer::BuildModels(FbxNode* node, NodeSharedPtr modelSharedPtr)
 				NodeSharedPtr childModel(new Model());
 				BuildModels(node->GetChild(index), childModel);
 
-				model->Children.push_back(childModel);
+				modelSharedPtr->Children.push_back(childModel);
+			}
+
+			retval = true;
+		}
+		else if (attribType == FbxNodeAttribute::eCamera)
+		{
+			CameraSharedPtr camera(new Camera());
+			camera->FbxNodeRef = node;
+			camera->Name = node->GetNameOnly(); // we're overriding the model that's passed in
+			modelSharedPtr->Children.push_back(camera);
+
+			// and look for children
+			int childCount = node->GetChildCount();
+			for (int index = 0; index < childCount; index++)
+			{
+				NodeSharedPtr childModel(new Model());
+				BuildModels(node->GetChild(index), childModel);
+
+				camera->Children.push_back(childModel);
 			}
 
 			retval = true;
 		}
 		else
 		{
-			ModelSharedPtr model = std::dynamic_pointer_cast<Model>(modelSharedPtr);
-			model->Name = node->GetNameOnly();
 			// This isn't great, because we're not building the transform hierarchy
 			int childCount = node->GetChildCount();
 			for (int index = 0; index < childCount; index++)
 			{
-				NodeSharedPtr childModel(new Model());
+				NodeSharedPtr childModel(new Node());
 				BuildModels(node->GetChild(index), childModel);
-				model->Children.push_back(childModel);
+				modelSharedPtr->Children.push_back(childModel);
 			}
 			retval = childCount > 0;
 		}
@@ -265,14 +301,41 @@ void SceneContainer::BuildRenderable()
 
 	for (int index = 0; index < rootModelCount; index++)
 	{
-		ModelSharedPtr model = std::dynamic_pointer_cast<Model>(mSceneModels[index]);
+		NodeSharedPtr nodePtr = mSceneModels[index];
+		ModelSharedPtr model = std::dynamic_pointer_cast<Model>(nodePtr);
 		if (model != nullptr)
 		{
 			model->BuildRenderables();
 		}
+		else
+		{
+			int nodeChildCount = SizeT2Int32(nodePtr->Children.size());
+			for each (auto nodeItem in nodePtr->Children)
+			{
+				BuildRenderables(nodeItem);
+			}
+		}
 	}
 
 	mCanRender = true;
+}
+
+void SceneContainer::BuildRenderables(NodeSharedPtr node)
+{
+	ModelSharedPtr model = std::dynamic_pointer_cast<Model>(node);
+	if (model != nullptr)
+	{
+		model->BuildRenderables();
+	}
+	else
+	{
+		int nodeChildCount = SizeT2Int32(node->Children.size());
+		for each (auto nodeItem in node->Children)
+		{
+			BuildRenderables(nodeItem);
+		}
+	}
+
 }
 
 void SceneContainer::BuildAnimation()

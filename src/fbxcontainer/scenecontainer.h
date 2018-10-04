@@ -27,12 +27,13 @@ public:
 	std::vector<FbxTakeInfo> GetTakeList() { return mFBXTakeList; }
 	std::vector<FbxAnimStack*> GetAnimStack() { return mFBXAnimStackList; }
 
-	bool BuildModels(FbxNode* node, NodeSharedPtr modelSharedPtr);
+	bool BuildModels(FbxNode* node, NodeSharedPtr& modelSharedPtr);
 	void BuildAnimation();
 
 	bool Process();
 
 	void BuildRenderable();
+	void BuildRenderables(NodeSharedPtr node);
 	void RenderAll(NodeSharedPtr selected, Program* program);
 
 private:

@@ -186,7 +186,6 @@ void DisplayCurve(const char* label, FbxAnimCurve* curve)
 	}
 }
 
-
 void DisplayCurveData(fbxsdk::FbxNode * node, fbxsdk::FbxAnimLayer * layer)
 {
 	FbxAnimCurve* animCurves[9];
