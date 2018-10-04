@@ -51,7 +51,6 @@ void ProcessCameraAnimLayer(FbxNodeAttribute* attr, FbxAnimStack* animStack, Fbx
 
 		}
 
-
 		FbxAnimCurve* animCurve = nullptr;
 
 		animCurve = camera->FieldOfView.GetCurve(layer);
@@ -164,11 +163,11 @@ void DisplayCurve(const char* label, FbxAnimCurve* curve)
 		int flags = (int)ImGui::CurveEditorFlags::NO_TANGENTS | (int)ImGui::CurveEditorFlags::SHOW_GRID;
 
 		ImGui::BeginChild(output.Buffer(), ImVec2(600, 600), true);
-		// if (ImGui::CurveEditor(output.Buffer(), (float*)points, keyCount, ImVec2(600, 600), flags, &newCount, &selectedPoint))
-		// {
-		// }
+		if (ImGui::CurveEditor(output.Buffer(), (float*)points, keyCount, ImVec2(600, 600), flags, &newCount, &selectedPoint))
+		{
+		}
 
-		ImGui::Curve(label, ImVec2(500, 400), keyCount, points);
+		// ImGui::Curve(label, ImVec2(500, 400), keyCount, points);
 
 		ImGui::EndChild();
 
