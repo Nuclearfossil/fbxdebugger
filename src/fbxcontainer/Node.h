@@ -19,7 +19,7 @@ class Node
 public:
 	Node()
 	{
-		NodeType = "Node";
+		NodeType = ""; // Don't display anything, we're just a node
 	}
 	~Node() {}
 

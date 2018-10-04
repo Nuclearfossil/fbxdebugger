@@ -313,7 +313,11 @@ void DisplaySubModel(NodeSharedPtr submodel)
 {
 	ImGui::Indent();
 	std::stringstream label;
-	label << submodel->NodeType.c_str() << ": " << submodel->Name.c_str();
+	label << submodel->Name.c_str();
+	if (submodel->NodeType.length() > 0)
+	{
+		label << " (" << submodel->NodeType.c_str() << ")";
+	}
 	if (ImGui::Selectable(label.str().c_str(), sSelectedNode == submodel))
 		sSelectedNode = submodel;
 

@@ -208,11 +208,12 @@ void SceneContainer::BindModelAttributes(ModelSharedPtr model, FbxNode* node)
 	}
 }
 
-bool SceneContainer::BuildModels(FbxNode* node, NodeSharedPtr& modelSharedPtr)
+// This whole method is incredibly ugly - I need to refactor how it works.
+bool SceneContainer::BuildModels(FbxNode* node, NodeSharedPtr& nodeSharedPtr)
 {
 	bool retval = true;
-	modelSharedPtr->FbxNodeRef = node;
-	modelSharedPtr->Name = node->GetNameOnly();
+	nodeSharedPtr->FbxNodeRef = node;
+	nodeSharedPtr->Name = node->GetNameOnly();
 
 	int attributeCount = node->GetNodeAttributeCount();
 	if (attributeCount == 0)
@@ -223,7 +224,7 @@ bool SceneContainer::BuildModels(FbxNode* node, NodeSharedPtr& modelSharedPtr)
 			NodeSharedPtr childModel(new Model());
 			BuildModels(node->GetChild(index), childModel);
 
-			modelSharedPtr->Children.push_back(childModel);
+			nodeSharedPtr->Children.push_back(childModel);
 		}
 
 		return retval;
@@ -239,22 +240,28 @@ bool SceneContainer::BuildModels(FbxNode* node, NodeSharedPtr& modelSharedPtr)
 
 		if (attribType == FbxNodeAttribute::eMesh)
 		{
-			ModelSharedPtr model = std::dynamic_pointer_cast<Model>(modelSharedPtr);
+			ModelSharedPtr model = std::dynamic_pointer_cast<Model>(nodeSharedPtr);
 
-			if (model != nullptr)
+			if (model == nullptr)
 			{
-				// Do other stuff with the model
-				BindModelAttributes(model, node);
+				nodeSharedPtr = ModelSharedPtr(new Model());
+				nodeSharedPtr->FbxNodeRef = node;
+				nodeSharedPtr->FbxNodeAttr = attrib;
+				nodeSharedPtr->Name = node->GetNameOnly();
+				model = std::dynamic_pointer_cast<Model>(nodeSharedPtr);
 			}
+
+			// Do other stuff with the model
+			BindModelAttributes(model, node);
 
 			// and look for children
 			int childCount = node->GetChildCount();
 			for (int index = 0; index < childCount; index++)
 			{
-				NodeSharedPtr childModel(new Model());
-				BuildModels(node->GetChild(index), childModel);
+				ModelSharedPtr childModel(new Model());
+				BuildModels(node->GetChild(index), std::dynamic_pointer_cast<Node>(childModel));
 
-				modelSharedPtr->Children.push_back(childModel);
+				nodeSharedPtr->Children.push_back(childModel);
 			}
 
 			retval = true;
@@ -264,7 +271,7 @@ bool SceneContainer::BuildModels(FbxNode* node, NodeSharedPtr& modelSharedPtr)
 			CameraSharedPtr camera(new Camera());
 			camera->FbxNodeRef = node;
 			camera->Name = node->GetNameOnly(); // we're overriding the model that's passed in
-			modelSharedPtr->Children.push_back(camera);
+			nodeSharedPtr = camera;
 
 			// and look for children
 			int childCount = node->GetChildCount();
@@ -280,13 +287,76 @@ bool SceneContainer::BuildModels(FbxNode* node, NodeSharedPtr& modelSharedPtr)
 		}
 		else
 		{
+			// Let's stuff in a placeholder name for the entity type
+			switch (attribType)
+			{
+			case fbxsdk::FbxNodeAttribute::eUnknown:
+				nodeSharedPtr->NodeType = "Unknown";
+				break;
+			case fbxsdk::FbxNodeAttribute::eMarker:
+				nodeSharedPtr->NodeType = "Marker";
+				break;
+			case fbxsdk::FbxNodeAttribute::eSkeleton:
+				nodeSharedPtr->NodeType = "Skeleton";
+				break;
+			case fbxsdk::FbxNodeAttribute::eNurbs:
+				nodeSharedPtr->NodeType = "Nurbs";
+				break;
+			case fbxsdk::FbxNodeAttribute::ePatch:
+				nodeSharedPtr->NodeType = "Patch";
+				break;
+			case fbxsdk::FbxNodeAttribute::eCameraStereo:
+				nodeSharedPtr->NodeType = "CameraStereo";
+				break;
+			case fbxsdk::FbxNodeAttribute::eCameraSwitcher:
+				nodeSharedPtr->NodeType = "CameraSwitcher";
+				break;
+			case fbxsdk::FbxNodeAttribute::eLight:
+				nodeSharedPtr->NodeType = "Light";
+				break;
+			case fbxsdk::FbxNodeAttribute::eOpticalReference:
+				nodeSharedPtr->NodeType = "OpticalReference";
+				break;
+			case fbxsdk::FbxNodeAttribute::eOpticalMarker:
+				nodeSharedPtr->NodeType = "OpticalMarker";
+				break;
+			case fbxsdk::FbxNodeAttribute::eNurbsCurve:
+				nodeSharedPtr->NodeType = "NurbsCurve";
+				break;
+			case fbxsdk::FbxNodeAttribute::eTrimNurbsSurface:
+				nodeSharedPtr->NodeType = "TrimNurbsSurface";
+				break;
+			case fbxsdk::FbxNodeAttribute::eBoundary:
+				nodeSharedPtr->NodeType = "Boundary";
+				break;
+			case fbxsdk::FbxNodeAttribute::eNurbsSurface:
+				nodeSharedPtr->NodeType = "NurbsSurface";
+				break;
+			case fbxsdk::FbxNodeAttribute::eShape:
+				nodeSharedPtr->NodeType = "Shape";
+				break;
+			case fbxsdk::FbxNodeAttribute::eLODGroup:
+				nodeSharedPtr->NodeType = "LODGroup";
+				break;
+			case fbxsdk::FbxNodeAttribute::eSubDiv:
+				nodeSharedPtr->NodeType = "SubDiv";
+				break;
+			case fbxsdk::FbxNodeAttribute::eCachedEffect:
+				nodeSharedPtr->NodeType = "CachedEffect";
+				break;
+			case fbxsdk::FbxNodeAttribute::eLine:
+				nodeSharedPtr->NodeType = "Line";
+				break;
+			default:
+				break;
+			}
 			// This isn't great, because we're not building the transform hierarchy
 			int childCount = node->GetChildCount();
 			for (int index = 0; index < childCount; index++)
 			{
 				NodeSharedPtr childModel(new Node());
 				BuildModels(node->GetChild(index), childModel);
-				modelSharedPtr->Children.push_back(childModel);
+				nodeSharedPtr->Children.push_back(childModel);
 			}
 			retval = childCount > 0;
 		}
