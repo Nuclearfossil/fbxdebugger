@@ -8,7 +8,7 @@
 
 std::atomic<unsigned int> IdIncrementor;
 
-VisualSceneNode::VisualSceneNode() 
+VisualSceneNode::VisualSceneNode()
 {
 	mId = IdIncrementor++;
 	SetPosition(0.0f, 0.0f, 0.0f);

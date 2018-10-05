@@ -15,6 +15,10 @@ namespace ImGui
 	static ImVec2 node_pos;
 	static ImGuiID last_node_id;
 
+	// see https://www.color-hex.com for some good colors
+	static ImU32 GraphAnnotationColor = 0x99ccff00; // 0x55000000
+	static ImU32 GraphHighlightColor = 0xff00ff00; // 0xff000000; 
+
 	enum class CurveEditorFlags
 	{
 		NO_TANGENTS = 1 << 0,
@@ -136,7 +140,7 @@ namespace ImGui
 			{
 				ImVec2 a = transform({ x + i * step_x, from_y });
 				ImVec2 b = transform({ x + i * step_x, from_y + height });
-				window->DrawList->AddLine(a, b, 0x55000000);
+				window->DrawList->AddLine(a, b, GraphAnnotationColor);
 				char buf[64];
 				if (exp > 0)
 				{
@@ -146,7 +150,7 @@ namespace ImGui
 				{
 					ImFormatString(buf, sizeof(buf), " %f", x + i * step_x);
 				}
-				window->DrawList->AddText(b, 0x55000000, buf);
+				window->DrawList->AddText(b, GraphAnnotationColor, buf);
 			}
 
 			frexp(height / 5, &exp);
@@ -158,7 +162,7 @@ namespace ImGui
 			{
 				ImVec2 a = transform({ from_x, y + i * step_y });
 				ImVec2 b = transform({ from_x + width, y + i * step_y });
-				window->DrawList->AddLine(a, b, 0x55000000);
+				window->DrawList->AddLine(a, b, GraphAnnotationColor);
 				char buf[64];
 				if (exp > 0)
 				{
@@ -168,7 +172,7 @@ namespace ImGui
 				{
 					ImFormatString(buf, sizeof(buf), " %f", y + i * step_y);
 				}
-				window->DrawList->AddText(a, 0x55000000, buf);
+				window->DrawList->AddText(a, GraphAnnotationColor, buf);
 			}
 		}
 
@@ -265,7 +269,7 @@ namespace ImGui
 				{
 					char tmp[64];
 					ImFormatString(tmp, sizeof(tmp), "%0.2f, %0.2f", p.x, p.y);
-					window->DrawList->AddText({ pos.x, pos.y - GetTextLineHeight() }, 0xff000000, tmp);
+					window->DrawList->AddText({ pos.x, pos.y - GetTextLineHeight() }, GraphHighlightColor, tmp);
 				}
 
 				if (IsItemActive() && IsMouseDragging(0))

@@ -34,9 +34,9 @@ double mouseY = 0.0;
 nlohmann::json* gSettings = nullptr;
 const char* glsl_version = "#version 150";
 
-GLFWwindow* GetWindow() 
-{ 
-	return gWindow; 
+GLFWwindow* GetWindow()
+{
+	return gWindow;
 }
 
 bool InitGfxSubsystem()
@@ -81,7 +81,7 @@ KeyState GetKeystate(ImGuiIO& io)
 	}
 	gCurrentKeyState.mods = io.KeyShift;
 
-	return gCurrentKeyState; 
+	return gCurrentKeyState;
 }
 
 void WindowSizeCallback(GLFWwindow* window, int width, int height)

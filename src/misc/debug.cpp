@@ -23,71 +23,42 @@ const char* TrackLayerNames[][2] =
 	, { "Scale Z", "SZ"}
 };
 
-void ProcessCameraAnimLayer(FbxNodeAttribute* attr, FbxAnimStack* animStack, FbxAnimLayer* layer)
+void ProcessCameraAnimations(fbxsdk::FbxCamera * camera, fbxsdk::FbxAnimLayer * layer)
 {
-	FbxNode* node = attr->GetNode();
-	// We handle Camera data a bit differently than other anim node types
-	FbxCamera* camera = FbxCast<FbxCamera>(attr);
+	FbxAnimCurve* animCurve = nullptr;
 
-	if (camera == nullptr && node == nullptr) return;
-
-	std::stringstream label;
-	label << "Camera: " << attr->GetName();
-	if (ImGui::TreeNode(label.str().c_str()))
+	animCurve = camera->FieldOfView.GetCurve(layer);
+	if ((animCurve != nullptr) && ImGui::TreeNode("FOV", "%s : FOV", camera->GetName()))
 	{
-		if (node != nullptr)
-		{
-			ProcessAnimLayer(node, animStack, layer);
-			// and any children
-			unsigned __int32 modelCount = SizeT2Int32(node->GetChildCount());
-			if (modelCount > 0)
-			{
-				for (unsigned _int32 index = 0; index < modelCount; index++)
-				{
-					FbxNode* child = node->GetChild(index);
-					ProcessAnimChildNode(child, animStack, layer);
-				}
-			}
+		DisplayCurve("FOV", animCurve);
+		ImGui::TreePop();
+	}
 
-		}
+	animCurve = camera->FieldOfViewX.GetCurve(layer);
+	if ((animCurve != nullptr) && ImGui::TreeNode("FOVX", "%s : FOVX", camera->GetName()))
+	{
+		DisplayCurve("FOVX", animCurve);
+		ImGui::TreePop();
+	}
 
-		FbxAnimCurve* animCurve = nullptr;
+	animCurve = camera->FieldOfViewY.GetCurve(layer);
+	if ((animCurve != nullptr) && ImGui::TreeNode("FOVY", "%s : FOVY", camera->GetName()))
+	{
+		DisplayCurve("FOVY", animCurve);
+		ImGui::TreePop();
+	}
 
-		animCurve = camera->FieldOfView.GetCurve(layer);
-		if ((animCurve != nullptr) && ImGui::TreeNode("FOV", "%s : FOV", camera->GetName()))
-		{
-			DisplayCurve("FOV", animCurve);
-			ImGui::TreePop();
-		}
+	animCurve = camera->Position.GetCurve(layer);
+	if ((animCurve != nullptr) && ImGui::TreeNode("Position", "%s : Position", camera->GetName()))
+	{
+		DisplayCurve("Position", animCurve);
+		ImGui::TreePop();
+	}
 
-		animCurve = camera->FieldOfViewX.GetCurve(layer);
-		if ((animCurve != nullptr) && ImGui::TreeNode("FOVX", "%s : FOVX", camera->GetName()))
-		{
-			DisplayCurve("FOVX", animCurve);
-			ImGui::TreePop();
-		}
-
-		animCurve = camera->FieldOfViewY.GetCurve(layer);
-		if ((animCurve != nullptr) && ImGui::TreeNode("FOVY", "%s : FOVY", camera->GetName()))
-		{
-			DisplayCurve("FOVY", animCurve);
-			ImGui::TreePop();
-		}
-
-		animCurve = camera->Position.GetCurve(layer);
-		if ((animCurve != nullptr) && ImGui::TreeNode("Position", "%s : Position", camera->GetName()))
-		{
-			DisplayCurve("Position", animCurve);
-			ImGui::TreePop();
-		}
-
-		animCurve = camera->FocalLength.GetCurve(layer);
-		if ((animCurve != nullptr) && ImGui::TreeNode("FocalLength", "%s : Focal length", camera->GetName()))
-		{
-			DisplayCurve("FocalLength", animCurve);
-			ImGui::TreePop();
-		}
-
+	animCurve = camera->FocalLength.GetCurve(layer);
+	if ((animCurve != nullptr) && ImGui::TreeNode("FocalLength", "%s : Focal length", camera->GetName()))
+	{
+		DisplayCurve("FocalLength", animCurve);
 		ImGui::TreePop();
 	}
 }
@@ -157,13 +128,14 @@ void DisplayCurve(const char* label, FbxAnimCurve* curve)
 			points[index].y = y;
 		}
 
-		int newCount;
-		int selectedPoint;
+		int newCount = 0;
+		int selectedPoint = 0;
 
 		int flags = (int)ImGui::CurveEditorFlags::NO_TANGENTS | (int)ImGui::CurveEditorFlags::SHOW_GRID;
 
-		ImGui::BeginChild(output.Buffer(), ImVec2(600, 600), true);
-		if (ImGui::CurveEditor(output.Buffer(), (float*)points, keyCount, ImVec2(600, 600), flags, &newCount, &selectedPoint))
+		ImGui::BeginChild(output.Buffer(), ImVec2(-1, -1), true);
+
+		if (ImGui::CurveEditor(output.Buffer(), (float*)points, keyCount, ImVec2(450, 400), flags, &newCount, &selectedPoint))
 		{
 		}
 
@@ -228,5 +200,17 @@ void DisplayCurveData(fbxsdk::FbxNode * node, fbxsdk::FbxAnimLayer * layer)
 
 			ImGui::TreePop();
 		}
+
+		FbxNodeAttribute* attrib = node->GetNodeAttribute();
+
+		if (attrib == nullptr) return;
+
+		FbxNodeAttribute::EType attribType = node->GetNodeAttribute()->GetAttributeType();
+		if (attribType == FbxNodeAttribute::eCamera)
+		{
+			FbxCamera* camera = FbxCast<FbxCamera>(attrib);
+			ProcessCameraAnimations(camera, layer);
+		}
+
 	}
 }

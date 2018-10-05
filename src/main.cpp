@@ -411,12 +411,6 @@ void DisplayAnimationInfo()
 						layerLabel << "Layer: " << layer->GetName() << "##" << animStack->GetUniqueID();
 						if (ImGui::TreeNode(layerLabel.str().c_str()))
 						{
-							// Do we have any cameras?
-							for each (auto camera in gContainer->GetCameras())
-							{
-								ProcessCameraAnimLayer(camera->FbxNodeAttr, animStack, layer);
-							}
-
 							for each (auto mesh in gContainer->GetMeshs())
 							{
 								ProcessAnimLayer(mesh->FbxNodeRef, animStack, layer);

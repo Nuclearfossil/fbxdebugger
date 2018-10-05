@@ -37,7 +37,7 @@ public:
 class MeshComponent : public Component
 {
 public:
-	MeshComponent() 
+	MeshComponent()
 	{
 		TypeName = "MeshComponent";
 	}
@@ -50,7 +50,7 @@ public:
 class CameraComponent : public Component
 {
 public:
-	CameraComponent() 
+	CameraComponent()
 	{
 		TypeName = "CameraComponent";
 	};

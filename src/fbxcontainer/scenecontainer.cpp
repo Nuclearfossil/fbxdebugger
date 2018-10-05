@@ -63,21 +63,6 @@ bool SceneContainer::Process()
 			mSceneModels.push_back(model);
 	}
 
-	int cameraCount = mScene->GetSrcObjectCount<FbxCamera>();
-
-	for (int index = 0; index < cameraCount; index++)
-	{
-		FbxCamera* fbxCamera = mScene->GetSrcObject<FbxCamera>(index);
-		if (fbxCamera != nullptr)
-		{
-			NodeSharedPtr camera(new Node());
-			camera->Name = fbxCamera->GetName();
-			camera->FbxNodeRef = fbxCamera->GetNode();
-			camera->FbxNodeAttr = fbxCamera;
-			mCameras.push_back(camera);
-		}
-	}
-
 	BuildAnimation();
 
 	return true;

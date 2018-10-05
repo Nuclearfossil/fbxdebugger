@@ -7,7 +7,7 @@
 /**
 Represents a compiled OpenGL shader.
 */
-class Shader 
+class Shader
 {
 public:
 

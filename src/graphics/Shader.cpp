@@ -24,7 +24,7 @@ Shader::Shader(const std::string& shaderCode, GLenum shaderType) :
 	//throw exception if compile error occurred
 	GLint status;
 	glGetShaderiv(ObjectID, GL_COMPILE_STATUS, &status);
-	if (status == GL_FALSE) 
+	if (status == GL_FALSE)
 	{
 		std::string msg("Compile failure in shader:\n");
 
@@ -50,18 +50,18 @@ Shader::Shader(const Shader& other) :
 	Retain();
 }
 
-Shader::~Shader() 
+Shader::~Shader()
 {
 	//_refCount will be NULL if constructor failed and threw an exception
 	if (ReferenceCount) Release();
 }
 
-GLuint Shader::object() const 
+GLuint Shader::object() const
 {
 	return ObjectID;
 }
 
-Shader& Shader::operator = (const Shader& other) 
+Shader& Shader::operator = (const Shader& other)
 {
 	Release();
 	ObjectID = other.ObjectID;
@@ -70,7 +70,7 @@ Shader& Shader::operator = (const Shader& other)
 	return *this;
 }
 
-Shader Shader::shaderFromFile(const std::string& filePath, GLenum shaderType) 
+Shader Shader::shaderFromFile(const std::string& filePath, GLenum shaderType)
 {
 	//open file
 	std::ifstream f;
@@ -89,17 +89,17 @@ Shader Shader::shaderFromFile(const std::string& filePath, GLenum shaderType)
 	return shader;
 }
 
-void Shader::Retain() 
+void Shader::Retain()
 {
 	assert(ReferenceCount);
 	*ReferenceCount += 1;
 }
 
-void Shader::Release() 
+void Shader::Release()
 {
 	assert(ReferenceCount && *ReferenceCount > 0);
 	*ReferenceCount -= 1;
-	if (*ReferenceCount == 0) 
+	if (*ReferenceCount == 0)
 	{
 		glDeleteShader(ObjectID); ObjectID = 0;
 		delete ReferenceCount; ReferenceCount = NULL;
