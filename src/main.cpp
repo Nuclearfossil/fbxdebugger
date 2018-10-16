@@ -61,8 +61,6 @@ void DisplaySubModel(NodeSharedPtr submodel);
 
 void DisplayAnimationInfo();
 
-void ClearBackground();
-
 void Update(double deltaSeconds);
 
 void ProcessingThread();
