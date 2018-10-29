@@ -10,7 +10,7 @@ void Model::BuildRenderables()
 	InternalBuildRenderables();
 
 	// Build Children
-	int childCount = SizeT2Int32(Children.size());
+	int childCount = SizeT2UInt32(Children.size());
 	for (int index = 0; index < childCount; index++)
 	{
 		ModelSharedPtr child = std::dynamic_pointer_cast<Model>(Children[index]);
@@ -75,6 +75,6 @@ void Model::Render(bool highlighted, Program* program)
 	glBindVertexArray(mVAO);
 	GLuint highlightedID = program->uniform("Highlighted");
 	glUniform1i(highlightedID, highlighted);
-	glDrawElements(GL_TRIANGLES, SizeT2Int32(TriangleIndices.size()) * 3, GL_UNSIGNED_INT, 0);
+	glDrawElements(GL_TRIANGLES, SizeT2UInt32(TriangleIndices.size()) * 3, GL_UNSIGNED_INT, 0);
 	glBindVertexArray(0);
 }

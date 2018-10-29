@@ -73,9 +73,15 @@ bool FileExists(const char* filename)
 	return result;
 }
 
-unsigned __int32 SizeT2Int32(size_t value)
+unsigned __int32 SizeT2UInt32(size_t value)
 {
 	if (value > MAXUINT32) return MAXUINT32;
 
 	return static_cast<unsigned __int32>(value);
+}
+
+float DoubleToFloat(double value)
+{
+	// until I can find a better way to do this.
+	return static_cast<float>(value);
 }

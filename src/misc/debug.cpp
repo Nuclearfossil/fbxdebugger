@@ -69,7 +69,7 @@ void ProcessAnimLayer(FbxNode* node, FbxAnimStack* animStack, FbxAnimLayer* laye
 	nodeLabel << node->GetName() << "##" << animStack->GetName() << "##" << layer->GetName();
 	if (ImGui::TreeNode(nodeLabel.str().c_str()))
 	{
-		unsigned __int32 modelCount = SizeT2Int32(node->GetChildCount());
+		unsigned __int32 modelCount = SizeT2UInt32(node->GetChildCount());
 		if (modelCount > 0)
 		{
 			for (unsigned _int32 index = 0; index < modelCount; index++)
@@ -91,7 +91,7 @@ void ProcessAnimChildNode(FbxNode* node, FbxAnimStack* animStack, FbxAnimLayer* 
 	nodeLabel << "Node: " << node->GetName() << "##" << animStack->GetUniqueID() << "##" << layer->GetName();
 	if (ImGui::TreeNode(nodeLabel.str().c_str()))
 	{
-		unsigned __int32 modelCount = SizeT2Int32(node->GetChildCount());
+		unsigned __int32 modelCount = SizeT2UInt32(node->GetChildCount());
 		if (modelCount > 0)
 		{
 			for (unsigned _int32 index = 0; index < modelCount; index++)
@@ -113,7 +113,7 @@ void DisplayCurve(const char* label, FbxAnimCurve* curve)
 	output.Append("##", 2);
 	output.Append(label, strlen(label) + 1);
 	output.Append(curve->GetName(), strlen(curve->GetName()) + 1);
-	unsigned __int32 keyCount = SizeT2Int32(curve->KeyGetCount());
+	unsigned __int32 keyCount = SizeT2UInt32(curve->KeyGetCount());
 
 	if (keyCount > 1)
 	{

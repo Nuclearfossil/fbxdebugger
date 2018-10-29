@@ -352,7 +352,7 @@ bool SceneContainer::BuildModels(FbxNode* node, NodeSharedPtr& nodeSharedPtr)
 
 void SceneContainer::BuildRenderable()
 {
-	int rootModelCount = SizeT2Int32(mSceneModels.size());
+	int rootModelCount = SizeT2UInt32(mSceneModels.size());
 
 	for (int index = 0; index < rootModelCount; index++)
 	{
@@ -364,7 +364,7 @@ void SceneContainer::BuildRenderable()
 		}
 		else
 		{
-			int nodeChildCount = SizeT2Int32(nodePtr->Children.size());
+			int nodeChildCount = SizeT2UInt32(nodePtr->Children.size());
 			for each (auto nodeItem in nodePtr->Children)
 			{
 				BuildRenderables(nodeItem);
@@ -384,7 +384,7 @@ void SceneContainer::BuildRenderables(NodeSharedPtr node)
 	}
 	else
 	{
-		int nodeChildCount = SizeT2Int32(node->Children.size());
+		int nodeChildCount = SizeT2UInt32(node->Children.size());
 		for each (auto nodeItem in node->Children)
 		{
 			BuildRenderables(nodeItem);
@@ -413,7 +413,7 @@ void SceneContainer::RenderAll(NodeSharedPtr selected, Program* program)
 	if (mCanRender == false) return;
 	mActiveProgram = program;
 
-	int rootSceneModelCount = SizeT2Int32(mSceneModels.size());
+	int rootSceneModelCount = SizeT2UInt32(mSceneModels.size());
 	for (int index = 0; index < rootSceneModelCount; index++)
 	{
 		Render(mSceneModels[index], selected);
@@ -422,7 +422,7 @@ void SceneContainer::RenderAll(NodeSharedPtr selected, Program* program)
 
 void SceneContainer::Render(NodeSharedPtr submodel, NodeSharedPtr selected)
 {
-	int childCount = SizeT2Int32(submodel->Children.size());
+	int childCount = SizeT2UInt32(submodel->Children.size());
 	for (int index = 0; index < childCount; index++)
 	{
 		Render(submodel->Children[index], selected);

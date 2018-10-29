@@ -47,4 +47,6 @@ const char* NormalizePath(const char* filename);
 
 // Function to convert to a 32 bit integer, clamping to the 32 bits of precision
 // for an int
-unsigned __int32 SizeT2Int32(size_t value);
+unsigned __int32 SizeT2UInt32(size_t value);
+
+float DoubleToFloat(double value);

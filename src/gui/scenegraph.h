@@ -45,6 +45,8 @@ public:
 
 	void Init();
 	virtual bool Update() override;
+
+	ModelSharedPtr mModel;
 };
 
 class CameraComponent : public Component
@@ -121,6 +123,7 @@ public:
 	~VisualSceneGraph();
 
 	void Build(FbxImporter* importer, FbxScene* scene);
+	void BuildRenderables();
 
 	std::vector<SceneNodeSharedPtr> Children() { return mSceneGraph; }
 

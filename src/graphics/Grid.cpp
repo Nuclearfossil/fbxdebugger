@@ -91,13 +91,13 @@ void Grid::Initialize(float gridSize, int gridCount, int bold0ffset)
 		colorVec.push_back(gridColor);
 	}
 
-	mVertexCount = SizeT2Int32(posVec.size());
+	mVertexCount = SizeT2UInt32(posVec.size());
 
 	CreateVBO(posVec, mPosVBO);
 	CreateVBO(colorVec, mColorVBO);
 
 
-	mVertexCount = SizeT2Int32(posVec.size());
+	mVertexCount = SizeT2UInt32(posVec.size());
 
 	mVAO = CreateVBA(posVec, colorVec, mPosVBO, mColorVBO);
 }

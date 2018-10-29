@@ -1,10 +1,12 @@
 #include "fbxcontainer/Node.h"
 #include "fbxcontainer/Model.h"
 #include "fbxcontainer/scenecontainer.h"
+#include "misc/Utils.h"
 
 #include "scenegraph.h"
 
 #include <atomic>
+#include <iostream>
 
 std::atomic<unsigned int> IdIncrementor;
 
@@ -99,20 +101,141 @@ void VisualSceneGraph::Build(FbxImporter* importer, FbxScene* scene)
 	}
 }
 
+void VisualSceneGraph::BuildRenderables()
+{
+	for each (auto node in mSceneGraph)
+	{
+		auto components = node->GetComponents();
+		for each (auto component in components)
+		{
+			if (component->TypeName == "MeshComponent")
+			{
+				MeshComponentSharedPtr meshComponent = std::dynamic_pointer_cast<MeshComponent>(component);
+				meshComponent->mModel->BuildRenderables();
+			}
+		}
+	}
+}
+
+void VisualSceneGraph::Reset()
+{
+	mSceneGraph.clear();
+	mAnimations.clear();
+}
+
+void BuildMeshFromAttribute(ModelSharedPtr model, FbxNodeAttribute* attr)
+{
+	FbxMesh* mesh = (FbxMesh*)attr;
+
+	// Little test of sanity
+	if (mesh == nullptr) return;
+
+	int polygonVertexCount = mesh->GetPolygonVertexCount();
+	FbxVector4* controlPoints = mesh->GetControlPoints();
+	int controlPointCount = mesh->GetControlPointsCount();
+
+	for (int index = 0; index < controlPointCount; index++)
+	{
+		glm::vec4 vertex =
+		{
+			controlPoints[index][0],
+			controlPoints[index][1],
+			controlPoints[index][2],
+			1.0
+		};
+		model->Vertices.push_back(vertex);
+	}
+
+	FbxLayerElementNormal* pLayerNormals = mesh->GetLayer(0)->GetNormals();
+	if (pLayerNormals != NULL)
+	{
+		FbxLayerElement::EMappingMode normalMappingMode = pLayerNormals->GetMappingMode();
+		FbxLayerElement::EReferenceMode normalReferenceMode = pLayerNormals->GetReferenceMode();
+		if (normalMappingMode == FbxLayerElement::eByControlPoint)
+		{
+			for (int index = 0; index < controlPointCount; index++)
+			{
+				FbxVector4 meshNormal = pLayerNormals->GetDirectArray().GetAt(index);
+				glm::vec4 normal =
+				{
+					meshNormal[0],
+					meshNormal[1],
+					meshNormal[2],
+					meshNormal[3]
+				};
+				model->Normals.push_back(normal);
+			}
+		}
+		else if (normalMappingMode == FbxLayerElement::eByPolygon)
+		{
+			assert(false);
+		}
+		else if (normalMappingMode == FbxLayerElement::eByPolygonVertex)
+		{
+			for (int index = 0; index < controlPointCount; index++)
+			{
+				FbxVector4 meshNormal;
+				switch (pLayerNormals->GetReferenceMode())
+				{
+				case FbxGeometryElement::eDirect:
+					meshNormal = pLayerNormals->GetDirectArray().GetAt(index);
+					break;
+				case FbxGeometryElement::eIndexToDirect:
+				{
+					int id = pLayerNormals->GetIndexArray().GetAt(index);
+					meshNormal = pLayerNormals->GetDirectArray().GetAt(id);
+				}
+				break;
+				default:
+					assert(false);
+				}
+
+				glm::vec4 normal =
+				{
+					meshNormal[0],
+					meshNormal[1],
+					meshNormal[2],
+					meshNormal[3]
+				};
+				model->Normals.push_back(normal);
+			}
+		}
+	}
+
+	int polygons = mesh->GetPolygonCount();
+	for (int index = 0; index < polygons; index++)
+	{
+		int triCount = mesh->GetPolygonSize(index);
+		if (triCount != 3)
+		{
+			std::cout << "invalid polygon size! index " << index << "polygon Size: " << triCount << std::endl;
+			continue;
+		}
+
+		glm::ivec3 indices =
+		{
+			mesh->GetPolygonVertex(index, 0),
+			mesh->GetPolygonVertex(index, 1),
+			mesh->GetPolygonVertex(index, 2)
+		};
+
+		model->TriangleIndices.push_back(indices);
+	}
+}
+
 void VisualSceneNode::Setup(FbxNode* fbxNode)
 {
 	Name(fbxNode->GetNameOnly());
 	auto position = fbxNode->GeometricTranslation.Get();
 	auto rotation = fbxNode->GeometricRotation.Get();
 	auto scale = fbxNode->GeometricScaling.Get();
-	SetPosition(position[0], position[1], position[2]);
-	SetRotation(rotation[0], rotation[1], rotation[2]);
-	SetScale(scale[0], scale[1], scale[2]);
+	SetPosition(DoubleToFloat(position[0]), DoubleToFloat(position[1]), DoubleToFloat(position[2]));
+	SetRotation(DoubleToFloat(rotation[0]), DoubleToFloat(rotation[1]), DoubleToFloat(rotation[2]));
+	SetScale(DoubleToFloat(scale[0]), DoubleToFloat(scale[1]), DoubleToFloat(scale[2]));
 
 	// What component to we want to add?
 	// we currently support two - Triangulated Mesh and Camera
 	// anything else should be considered a null (for now)
-
 	int attributeCount = fbxNode->GetNodeAttributeCount();
 	for (int attributeIndex = 0; attributeIndex < attributeCount; attributeIndex++)
 	{
@@ -138,7 +261,10 @@ void VisualSceneNode::Setup(FbxNode* fbxNode)
 			break;
 			case fbxsdk::FbxNodeAttribute::eMesh:
 			{
-				ComponentSharedPtr component(new MeshComponent());
+				MeshComponentSharedPtr component(new MeshComponent());
+				ModelSharedPtr model(new Model());
+				BuildMeshFromAttribute(model, attrib);
+				component->mModel = model;
 				mComponents.push_back(component);
 			}
 				break;
@@ -193,12 +319,6 @@ void VisualSceneNode::Setup(FbxNode* fbxNode)
 		child->Setup(fbxNode->GetChild(index));
 		AddChild(child);
 	}
-}
-
-void VisualSceneGraph::Reset()
-{
-	mSceneGraph.clear();
-	mAnimations.clear();
 }
 
 void MeshComponent::Init()

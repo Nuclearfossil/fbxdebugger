@@ -22,6 +22,9 @@
 
 #include "gui/scenegraph.h"
 
+#include "animation/anim.h"
+#include "misc/animtool.h"
+
 #include <thread>
 #include <fstream>
 
@@ -30,6 +33,7 @@
 
 basicCamera::FreeLookCamera gCamera;
 Grid gGrid;
+Anim* gAnimBlock = nullptr;
 
 MouseInfo gMouseInfo;
 
@@ -168,6 +172,7 @@ int main(int, char**)
 		if (gRegenAssets)
 		{
 			gContainer->BuildRenderable();
+			gSceneGraph.Build(gContainer->GetImporter(), gContainer->GetScene());
 			gRegenAssets = false;
 		}
 
@@ -296,6 +301,17 @@ void DisplaySceneInfo()
 		}
 	}
 	ImGui::End();
+
+	ImGui::Begin("Debug Text", nullptr, ImGuiWindowFlags_HorizontalScrollbar);
+	ImGui::SetWindowSize(ImVec2(600, 400), ImGuiSetCond_FirstUseEver);
+	ImGui::TextColored(ImVec4(0.3f, 7.0f, 7.0f, 1.0f), "Here is some data");
+
+	char debug[440086];
+	strcpy_s(debug, GetDebugText());
+	ImGui::TextUnformatted(debug);
+
+	ImGui::TextColored(ImVec4(0.3f, 7.0f, 7.0f, 1.0f), "End of data");
+	ImGui::End();
 }
 
 void DisplayChildMesh(SceneNodeSharedPtr node)
@@ -361,7 +377,7 @@ void DisplaySubModel(NodeSharedPtr submodel)
 	if (ImGui::Selectable(label.str().c_str(), sSelectedNode == submodel))
 		sSelectedNode = submodel;
 
-	int childCount = SizeT2Int32(submodel->Children.size());
+	int childCount = SizeT2UInt32(submodel->Children.size());
 	for (int index = 0; index < childCount; index++)
 	{
 		DisplaySubModel(submodel->Children[index]);
@@ -399,7 +415,7 @@ void DisplayAnimationInfo()
 				const char* animStackName = animStack->GetName();
 				if (ImGui::CollapsingHeader(animStackName))
 				{
-					unsigned __int32 animLayerCount = SizeT2Int32(animStack->GetMemberCount<FbxAnimLayer>());
+					unsigned __int32 animLayerCount = SizeT2UInt32(animStack->GetMemberCount<FbxAnimLayer>());
 
 					ImGui::Indent();
 					for (unsigned __int32 animLayerIndex = 0; animLayerIndex < animLayerCount; animLayerIndex++)
@@ -450,6 +466,9 @@ void ProcessingThread()
 
 				//gSceneGraph.Build(gContainer);
 				gSceneGraph.Build(gContainer->GetImporter(), gContainer->GetScene());
+
+				delete gAnimBlock;
+				gAnimBlock = BuildAnimBlock(gContainer->GetImporter(), gContainer->GetScene());
 
 				gRegenAssets = true;
 				gAppState.OpenFile = false;
