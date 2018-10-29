@@ -17,7 +17,7 @@ namespace ImGui
 
 	// see https://www.color-hex.com for some good colors
 	static ImU32 GraphAnnotationColor = 0x99ccff00; // 0x55000000
-	static ImU32 GraphHighlightColor = 0xff00ff00; // 0xff000000; 
+	static ImU32 GraphHighlightColor = 0xff00ff00; // 0xff000000;
 
 	enum class CurveEditorFlags
 	{
