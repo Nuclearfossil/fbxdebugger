@@ -24,7 +24,6 @@
 
 #include "animation/anim.h"
 #include "misc/animtool.h"
-#include "importer\importer.h"
 
 #include <thread>
 #include <fstream>
@@ -458,8 +457,7 @@ void ProcessingThread()
 				gSceneGraph.Build(gContainer->GetImporter(), gContainer->GetScene());
 
 				delete gAnimBlock;
-				ImporterBase importer;
-				gAnimBlock = importer.Import(filename);
+				gAnimBlock = BuildAnimBlock(filename);
 
 				gRegenAssets = true;
 				gAppState.OpenFile = false;

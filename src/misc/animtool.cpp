@@ -5,6 +5,134 @@
 #include <fbxsdk.h>
 #include <string>
 
+FbxManager* m_FBXManager = nullptr;
+FbxImporter* m_FBXImporter = nullptr;
+FbxScene* m_Scene = nullptr;
+
+void DebugNode(FbxNode* node, int& depth);
+
+AnimBlock* BuildAnimBlock(const char* filename)
+{
+	m_FBXManager = FbxManager::Create();
+	FbxIOSettings* ioSettings = FbxIOSettings::Create(m_FBXManager, IOSROOT);
+	m_FBXManager->SetIOSettings(ioSettings);
+
+	AnimBlock* animBlock = new AnimBlock();
+
+	m_FBXImporter = FbxImporter::Create(m_FBXManager, "");
+	m_FBXImporter->Initialize(filename, -1, m_FBXManager->GetIOSettings());
+
+	fbxsdk::FbxScene* scene = FbxScene::Create(m_FBXManager, "sceneRoot");
+	if (scene == nullptr) return animBlock;
+
+	if (m_FBXImporter->Import(scene) == false)
+	{
+		auto result = m_FBXImporter->GetStatus();
+		printf("Unexpected Import error: %s\n", result.GetErrorString());
+		return animBlock;
+	}
+
+	// We're only interested in the top level anim stack (currently).
+	FbxAnimStack* animStack = scene->GetCurrentAnimationStack();
+
+	fbxsdk::FbxNode* rootNode = scene->GetRootNode();
+	if (rootNode == nullptr) return nullptr;
+
+	int rootNodeChildCount = rootNode->GetChildCount();
+
+	printf("Nodes off the root node ***************************\n");
+	for (int index = 0; index < rootNodeChildCount; index++)
+	{
+		int depth = 0;
+		FbxNode* node = rootNode->GetChild(index);
+		DebugNode(node, depth);
+	}
+
+	return animBlock;
+}
+
+void PrintIndent(int depth)
+{
+	for (int index = 0; index < depth; index++)
+	{
+		printf("\t");
+	}
+}
+
+void DebugNode(FbxNode* node, int& depth)
+{
+	if (node == nullptr) return;
+
+	depth++;
+
+	// print the current node info
+	PrintIndent(depth);
+	printf("Node Name: %s ", node->GetName());
+
+	// Let's do a bunch of casts to see if there's anything we can cast it to
+	bool foundOne = false;
+	if (node->GetSkeleton() != nullptr)
+	{
+		printf("[Skeleton]");
+		foundOne = true;
+	}
+	if (node->GetNull() != nullptr)
+	{
+		printf("[NULL]");
+		foundOne = true;
+	}
+	if (node->GetMarker() != nullptr)
+	{
+		printf("[Marker]");
+		foundOne = true;
+	}
+	if (node->GetGeometry() != nullptr)
+	{
+		printf("[Geo]");
+		foundOne = true;
+	}
+	if (node->GetMesh() != nullptr)
+	{
+		printf("[Mesh]");
+		foundOne = true;
+	}
+	if (node->GetNurbs() != nullptr)
+	{
+		printf("[Nurbs]");
+		foundOne = true;
+	}
+	if (node->GetNurbsSurface() != nullptr)
+	{
+		printf("[NurbSurf]");
+		foundOne = true;
+	}
+	if (node->GetPatch() != nullptr)
+	{
+		printf("[Patch]");
+		foundOne = true;
+	}
+	if (node->GetLight() != nullptr)
+	{
+		printf("[Light]");
+		foundOne = true;
+	}
+	if (node->GetLine() != nullptr)
+	{
+		printf("[Line]");
+		foundOne = true;
+	}
+	printf("\n");
+
+	// walk the children, printing them
+	int childCount = node->GetChildCount();
+	for (int index = 0; index < childCount; index++)
+	{
+		FbxNode* child = node->GetChild(index);
+		DebugNode(child, depth);
+	}
+
+	depth--;
+}
 AnimBlock* BuildAnimBlock(fbxsdk::FbxImporter* importer, fbxsdk::FbxScene* scene)
 {
 	AnimBlock* block = new AnimBlock();
@@ -23,34 +151,34 @@ AnimBlock* BuildAnimBlock(fbxsdk::FbxImporter* importer, fbxsdk::FbxScene* scene
 		if (layer == nullptr) continue;
 
 		int memberCount = layer->GetMemberCount();
-		for (size_t memberIndex = 0; memberIndex < memberCount; memberIndex++)
+		for (int memberIndex = 0; memberIndex < memberCount; memberIndex++)
 		{
 			auto memberNode = layer->GetMember(memberIndex);
 			int srcPropertyCount = layer->GetSrcPropertyCount();
-			for (size_t propertyIndex = 0; propertyIndex < srcPropertyCount; propertyIndex++)
+			for (int propertyIndex = 0; propertyIndex < srcPropertyCount; propertyIndex++)
 			{
 				auto property = layer->GetSrcProperty(propertyIndex);
 			}
 			int dstPropertyCount = layer->GetDstPropertyCount();
-			for (size_t dstPropIndex = 0; dstPropIndex < dstPropertyCount; dstPropIndex++)
+			for (int dstPropIndex = 0; dstPropIndex < dstPropertyCount; dstPropIndex++)
 			{
 				auto property = layer->GetDstProperty(dstPropIndex);
 			}
 			int dstObjCount = layer->GetDstObjectCount();
 
 			int srcObjCount = layer->GetSrcObjectCount();
-			for (size_t srcObjIndex = 0; srcObjIndex < srcObjCount; srcObjIndex++)
+			for (int srcObjIndex = 0; srcObjIndex < srcObjCount; srcObjIndex++)
 			{
 				auto object = layer->GetSrcObject(srcObjIndex);
 			}
 		}
 
 		auto animCurveCount = layer->GetSrcObjectCount<FbxAnimCurveNode>();
-		for (size_t animCurveIndex = 0; animCurveIndex < animCurveCount; animCurveIndex++)
+		for (int animCurveIndex = 0; animCurveIndex < animCurveCount; animCurveIndex++)
 		{
 			FbxAnimCurveNode* curveNode = layer->GetSrcObject<FbxAnimCurveNode>(animCurveIndex);
 			auto channelCount = curveNode->GetChannelsCount();
-			for (size_t channelIndex = 0; channelIndex < channelCount; channelIndex++)
+			for (unsigned int channelIndex = 0; channelIndex < channelCount; channelIndex++)
 			{
 				FbxAnimCurve* curve = curveNode->GetCurve(channelIndex);
 				if (curve == nullptr) continue;
