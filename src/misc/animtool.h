@@ -6,5 +6,4 @@ namespace fbxsdk
 	class FbxScene;
 }
 
-AnimBlock* BuildAnimBlock(fbxsdk::FbxImporter* importer, fbxsdk::FbxScene* scene);
 AnimBlock* BuildAnimBlock(const char* filename);

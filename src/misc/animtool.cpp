@@ -5,13 +5,14 @@
 #include <fbxsdk.h>
 #include <string>
 
-void DebugNode(FbxNode* node, int& depth);
+void DebugNode(FbxNode* node, FbxAnimLayer* animLayer, int& depth);
 
 AnimBlock* BuildAnimBlock(const char* filename)
 {
-	FbxManager* fbxManager;
-	FbxImporter* fbxImporter;
-	FbxScene* scene;
+	FbxManager* fbxManager = nullptr;
+	FbxImporter* fbxImporter = nullptr;
+	FbxScene* scene = nullptr;
+	FbxAnimStack* defaultAnimStack = nullptr;
 
 	fbxManager = FbxManager::Create();
 	FbxIOSettings* ioSettings = FbxIOSettings::Create(fbxManager, IOSROOT);
@@ -22,7 +23,7 @@ AnimBlock* BuildAnimBlock(const char* filename)
 	fbxImporter = FbxImporter::Create(fbxManager, "");
 	fbxImporter->Initialize(filename, -1, fbxManager->GetIOSettings());
 
-	fbxsdk::FbxScene* scene = FbxScene::Create(fbxManager, "sceneRoot");
+	scene = FbxScene::Create(fbxManager, "sceneRoot");
 	if (scene == nullptr) return animBlock;
 
 	if (fbxImporter->Import(scene) == false)
@@ -33,7 +34,8 @@ AnimBlock* BuildAnimBlock(const char* filename)
 	}
 
 	// We're only interested in the top level anim stack (currently).
-	FbxAnimStack* animStack = scene->GetCurrentAnimationStack();
+	defaultAnimStack = scene->GetCurrentAnimationStack();
+	FbxAnimLayer* layer = defaultAnimStack->GetSrcObject<FbxAnimLayer>(0);
 
 	fbxsdk::FbxNode* rootNode = scene->GetRootNode();
 	if (rootNode == nullptr) return nullptr;
@@ -45,7 +47,7 @@ AnimBlock* BuildAnimBlock(const char* filename)
 	{
 		int depth = 0;
 		FbxNode* node = rootNode->GetChild(index);
-		DebugNode(node, depth);
+		DebugNode(node, layer, depth);
 	}
 
 	fbxManager->Destroy();
@@ -56,11 +58,11 @@ void PrintIndent(int depth)
 {
 	for (int index = 0; index < depth; index++)
 	{
-		printf("\t");
+		printf("    ");
 	}
 }
 
-void DebugNode(FbxNode* node, int& depth)
+void DebugNode(FbxNode* node, FbxAnimLayer* animLayer, int& depth)
 {
 	if (node == nullptr) return;
 
@@ -124,70 +126,65 @@ void DebugNode(FbxNode* node, int& depth)
 	}
 	printf("\n");
 
+	// What do we have for animation?
+	FbxAnimCurve* animCurves[9];
+
+	animCurves[0] = node->LclTranslation.GetCurve(animLayer, FBXSDK_CURVENODE_COMPONENT_X);
+	animCurves[1] = node->LclTranslation.GetCurve(animLayer, FBXSDK_CURVENODE_COMPONENT_Y);
+	animCurves[2] = node->LclTranslation.GetCurve(animLayer, FBXSDK_CURVENODE_COMPONENT_Z);
+	animCurves[3] = node->LclRotation.GetCurve(animLayer, FBXSDK_CURVENODE_COMPONENT_X);
+	animCurves[4] = node->LclRotation.GetCurve(animLayer, FBXSDK_CURVENODE_COMPONENT_Y);
+	animCurves[5] = node->LclRotation.GetCurve(animLayer, FBXSDK_CURVENODE_COMPONENT_Z);
+	animCurves[6] = node->LclScaling.GetCurve(animLayer, FBXSDK_CURVENODE_COMPONENT_X);
+	animCurves[7] = node->LclScaling.GetCurve(animLayer, FBXSDK_CURVENODE_COMPONENT_Y);
+	animCurves[8] = node->LclScaling.GetCurve(animLayer, FBXSDK_CURVENODE_COMPONENT_Z);
+
+	if (animCurves[0] != nullptr)
+	{
+		printf("Translation X keycount: %d\n", animCurves[0]->KeyGetCount());
+	}
+	if (animCurves[1] != nullptr)
+	{
+		printf("Translation Y keycount: %d\n", animCurves[1]->KeyGetCount());
+	}
+	if (animCurves[2] != nullptr)
+	{
+		printf("Translation Z keycount: %d\n", animCurves[2]->KeyGetCount());
+	}
+
+	if (animCurves[3] != nullptr)
+	{
+		printf("Rotation X keycount: %d\n", animCurves[3]->KeyGetCount());
+	}
+	if (animCurves[4] != nullptr)
+	{
+		printf("Rotation Y keycount: %d\n", animCurves[4]->KeyGetCount());
+	}
+	if (animCurves[5] != nullptr)
+	{
+		printf("Rotation Z keycount: %d\n", animCurves[5]->KeyGetCount());
+	}
+
+	if (animCurves[6] != nullptr)
+	{
+		printf("Scale X keycount: %d\n", animCurves[6]->KeyGetCount());
+	}
+	if (animCurves[7] != nullptr)
+	{
+		printf("Scale Y keycount: %d\n", animCurves[7]->KeyGetCount());
+	}
+	if (animCurves[8] != nullptr)
+	{
+		printf("Scale Z keycount: %d\n", animCurves[8]->KeyGetCount());
+	}
+
 	// walk the children, printing them
 	int childCount = node->GetChildCount();
 	for (int index = 0; index < childCount; index++)
 	{
 		FbxNode* child = node->GetChild(index);
-		DebugNode(child, depth);
+		DebugNode(child, animLayer, depth);
 	}
 
 	depth--;
-}
-AnimBlock* BuildAnimBlock(fbxsdk::FbxImporter* importer, fbxsdk::FbxScene* scene)
-{
-	AnimBlock* block = new AnimBlock();
-
-	// We're only interested in the top level anim stack (currently).
-	FbxAnimStack* animStack = scene->GetCurrentAnimationStack();
-
-	if (animStack == nullptr) return block;
-
-	unsigned __int32 animLayerCount = SizeT2UInt32(animStack->GetMemberCount<FbxAnimLayer>());
-
-	for (unsigned __int32 animLayerIndex = 0; animLayerIndex < animLayerCount; animLayerIndex++)
-	{
-		FbxAnimLayer* layer = animStack->GetSrcObject<FbxAnimLayer>(animLayerIndex);
-
-		if (layer == nullptr) continue;
-
-		int memberCount = layer->GetMemberCount();
-		for (int memberIndex = 0; memberIndex < memberCount; memberIndex++)
-		{
-			auto memberNode = layer->GetMember(memberIndex);
-			int srcPropertyCount = layer->GetSrcPropertyCount();
-			for (int propertyIndex = 0; propertyIndex < srcPropertyCount; propertyIndex++)
-			{
-				auto property = layer->GetSrcProperty(propertyIndex);
-			}
-			int dstPropertyCount = layer->GetDstPropertyCount();
-			for (int dstPropIndex = 0; dstPropIndex < dstPropertyCount; dstPropIndex++)
-			{
-				auto property = layer->GetDstProperty(dstPropIndex);
-			}
-			int dstObjCount = layer->GetDstObjectCount();
-
-			int srcObjCount = layer->GetSrcObjectCount();
-			for (int srcObjIndex = 0; srcObjIndex < srcObjCount; srcObjIndex++)
-			{
-				auto object = layer->GetSrcObject(srcObjIndex);
-			}
-		}
-
-		auto animCurveCount = layer->GetSrcObjectCount<FbxAnimCurveNode>();
-		for (int animCurveIndex = 0; animCurveIndex < animCurveCount; animCurveIndex++)
-		{
-			FbxAnimCurveNode* curveNode = layer->GetSrcObject<FbxAnimCurveNode>(animCurveIndex);
-			auto channelCount = curveNode->GetChannelsCount();
-			for (unsigned int channelIndex = 0; channelIndex < channelCount; channelIndex++)
-			{
-				FbxAnimCurve* curve = curveNode->GetCurve(channelIndex);
-				if (curve == nullptr) continue;
-
-				const char* name = curve->GetName();
-			}
-		}
-	}
-
-	return block;
 }
