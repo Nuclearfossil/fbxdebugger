@@ -24,6 +24,7 @@
 
 #include "animation/anim.h"
 #include "misc/animtool.h"
+#include "importer\importer.h"
 
 #include <thread>
 #include <fstream>
@@ -33,7 +34,7 @@
 
 basicCamera::FreeLookCamera gCamera;
 Grid gGrid;
-Anim* gAnimBlock = nullptr;
+AnimBlock* gAnimBlock = nullptr;
 
 MouseInfo gMouseInfo;
 
@@ -301,17 +302,6 @@ void DisplaySceneInfo()
 		}
 	}
 	ImGui::End();
-
-	ImGui::Begin("Debug Text", nullptr, ImGuiWindowFlags_HorizontalScrollbar);
-	ImGui::SetWindowSize(ImVec2(600, 400), ImGuiSetCond_FirstUseEver);
-	ImGui::TextColored(ImVec4(0.3f, 7.0f, 7.0f, 1.0f), "Here is some data");
-
-	char debug[440086];
-	strcpy_s(debug, GetDebugText());
-	ImGui::TextUnformatted(debug);
-
-	ImGui::TextColored(ImVec4(0.3f, 7.0f, 7.0f, 1.0f), "End of data");
-	ImGui::End();
 }
 
 void DisplayChildMesh(SceneNodeSharedPtr node)
@@ -468,7 +458,8 @@ void ProcessingThread()
 				gSceneGraph.Build(gContainer->GetImporter(), gContainer->GetScene());
 
 				delete gAnimBlock;
-				gAnimBlock = BuildAnimBlock(gContainer->GetImporter(), gContainer->GetScene());
+				ImporterBase importer;
+				gAnimBlock = importer.Import(filename);
 
 				gRegenAssets = true;
 				gAppState.OpenFile = false;

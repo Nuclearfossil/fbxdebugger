@@ -1,4 +1,4 @@
-class Anim;
+class AnimBlock;
 
 namespace fbxsdk
 {
@@ -6,5 +6,4 @@ namespace fbxsdk
 	class FbxScene;
 }
 
-Anim* BuildAnimBlock(fbxsdk::FbxImporter* importer, fbxsdk::FbxScene* scene);
-const char* GetDebugText();
+AnimBlock* BuildAnimBlock(fbxsdk::FbxImporter* importer, fbxsdk::FbxScene* scene);
