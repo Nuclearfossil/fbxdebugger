@@ -87,6 +87,11 @@ Anim* BuildAnimBlock(fbxsdk::FbxImporter* importer, fbxsdk::FbxScene* scene)
 	return block;
 }
 
+int GetDebugTextLength()
+{
+	return debugText.length();
+}
+
 const char* GetDebugText()
 {
 	return debugText.c_str();

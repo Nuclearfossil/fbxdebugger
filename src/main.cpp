@@ -306,12 +306,14 @@ void DisplaySceneInfo()
 	ImGui::SetWindowSize(ImVec2(600, 400), ImGuiSetCond_FirstUseEver);
 	ImGui::TextColored(ImVec4(0.3f, 7.0f, 7.0f, 1.0f), "Here is some data");
 
-	char debug[440086];
-	strcpy_s(debug, GetDebugText());
+	int debugTextLength = GetDebugTextLength() + 1;
+	char* debug = new char[debugTextLength];
+	strcpy_s(debug, debugTextLength, GetDebugText());
 	ImGui::TextUnformatted(debug);
 
 	ImGui::TextColored(ImVec4(0.3f, 7.0f, 7.0f, 1.0f), "End of data");
 	ImGui::End();
+	delete [] debug;
 }
 
 void DisplayChildMesh(SceneNodeSharedPtr node)

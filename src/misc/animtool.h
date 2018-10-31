@@ -8,3 +8,4 @@ namespace fbxsdk
 
 Anim* BuildAnimBlock(fbxsdk::FbxImporter* importer, fbxsdk::FbxScene* scene);
 const char* GetDebugText();
+int GetDebugTextLength();
