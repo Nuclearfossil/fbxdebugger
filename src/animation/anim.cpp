@@ -9,6 +9,14 @@ AnimCurve::AnimCurve(AnimCurveEnum curveType)
 AnimCurve::~AnimCurve()
 {}
 
+void AnimCurve::AddKey(double time, double value)
+{
+	AnimKey key;
+	key.Time = time;
+	key.Value = value;
+	m_Keys.push_back(key);
+}
+
 //
 // Our intent is not to shrink the list below the size of the currently allocated keys and `reserve` does this automatically.
 //
@@ -32,15 +40,20 @@ AnimBlock::~AnimBlock()
 {
 }
 
+void AnimBlock::SetName(const char* name)
+{
+	m_Name.assign(name);
+}
+
 AnimCurve* AnimBlock::AddCurve(AnimCurveEnum curveType)
 {
 	AnimCurve* curve = GetCurve(curveType);
 
-	if (curve = nullptr)
+	if (curve == nullptr)
 	{
 		AnimCurve curveToAdd(curveType);
 		m_Curves.push_back(curveToAdd);
-		curve = &m_Curves[curveType];
+		curve = GetCurve(curveType);
 	}
 	return curve;
 }
@@ -72,3 +85,11 @@ Anim::Anim()
 
 Anim::~Anim()
 {}
+
+AnimBlock& Anim::AddAnimBlock(const char* name)
+{
+	AnimBlock block;
+	block.SetName(name);
+	m_Block.push_back(block);
+	return m_Block.at(m_Block.size()-1);
+}

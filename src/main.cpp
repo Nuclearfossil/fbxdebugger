@@ -33,7 +33,7 @@
 
 basicCamera::FreeLookCamera gCamera;
 Grid gGrid;
-AnimBlock* gAnimBlock = nullptr;
+Anim* gAnim = nullptr;
 
 MouseInfo gMouseInfo;
 
@@ -456,8 +456,8 @@ void ProcessingThread()
 				//gSceneGraph.Build(gContainer);
 				gSceneGraph.Build(gContainer->GetImporter(), gContainer->GetScene());
 
-				delete gAnimBlock;
-				gAnimBlock = BuildAnimBlock(filename);
+				delete gAnim;
+				gAnim = BuildAnim(filename);
 
 				gRegenAssets = true;
 				gAppState.OpenFile = false;

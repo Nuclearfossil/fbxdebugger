@@ -1,9 +1,3 @@
-class AnimBlock;
+class Anim;
 
-namespace fbxsdk
-{
-	class FbxImporter;
-	class FbxScene;
-}
-
-AnimBlock* BuildAnimBlock(const char* filename);
+Anim* BuildAnim(const char* filename);

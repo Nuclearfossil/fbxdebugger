@@ -94,6 +94,8 @@ public:
 	// returns: The number of keys reserved.
 	size_t ReserveKeys(size_t initialCapacity);
 
+	void AddKey(double time, double value);
+
 public:
 	AnimCurveEnum m_CurveType;
 
@@ -106,6 +108,9 @@ class AnimBlock
 public:
 	AnimBlock();
 	~AnimBlock();
+	void SetName(const char* name);
+	const std::string GetName() { m_Name; }
+
 
 	AnimCurve* AddCurve(AnimCurveEnum curveType);
 	AnimCurve* GetCurve(AnimCurveEnum curveType);
@@ -114,6 +119,7 @@ public:
 
 private:
 	std::vector<AnimCurve> m_Curves;
+	std::string m_Name;
 };
 
 class Anim
@@ -122,7 +128,8 @@ public:
 	Anim();
 	~Anim();
 
+	AnimBlock& AddAnimBlock(const char* name);
+
 private:
-	AnimBlock m_Block;
-	std::vector<Anim> m_Children;
+	std::vector<AnimBlock> m_Block;
 };
