@@ -5,29 +5,29 @@
 #include <fbxsdk.h>
 #include <string>
 
-FbxManager* m_FBXManager = nullptr;
-FbxImporter* m_FBXImporter = nullptr;
-FbxScene* m_Scene = nullptr;
-
 void DebugNode(FbxNode* node, int& depth);
 
 AnimBlock* BuildAnimBlock(const char* filename)
 {
-	m_FBXManager = FbxManager::Create();
-	FbxIOSettings* ioSettings = FbxIOSettings::Create(m_FBXManager, IOSROOT);
-	m_FBXManager->SetIOSettings(ioSettings);
+	FbxManager* fbxManager;
+	FbxImporter* fbxImporter;
+	FbxScene* scene;
+
+	fbxManager = FbxManager::Create();
+	FbxIOSettings* ioSettings = FbxIOSettings::Create(fbxManager, IOSROOT);
+	fbxManager->SetIOSettings(ioSettings);
 
 	AnimBlock* animBlock = new AnimBlock();
 
-	m_FBXImporter = FbxImporter::Create(m_FBXManager, "");
-	m_FBXImporter->Initialize(filename, -1, m_FBXManager->GetIOSettings());
+	fbxImporter = FbxImporter::Create(fbxManager, "");
+	fbxImporter->Initialize(filename, -1, fbxManager->GetIOSettings());
 
-	fbxsdk::FbxScene* scene = FbxScene::Create(m_FBXManager, "sceneRoot");
+	fbxsdk::FbxScene* scene = FbxScene::Create(fbxManager, "sceneRoot");
 	if (scene == nullptr) return animBlock;
 
-	if (m_FBXImporter->Import(scene) == false)
+	if (fbxImporter->Import(scene) == false)
 	{
-		auto result = m_FBXImporter->GetStatus();
+		auto result = fbxImporter->GetStatus();
 		printf("Unexpected Import error: %s\n", result.GetErrorString());
 		return animBlock;
 	}
@@ -48,6 +48,7 @@ AnimBlock* BuildAnimBlock(const char* filename)
 		DebugNode(node, depth);
 	}
 
+	fbxManager->Destroy();
 	return animBlock;
 }
 
