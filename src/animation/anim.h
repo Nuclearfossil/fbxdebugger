@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <string>
 
 const double kFBXTimeUnit = 1.0 / 46186158000.0; // http://help.autodesk.com/cloudhelp/2018/ENU/FBX-Developer-Help/cpp_ref/class_fbx_anim_curve.html
 

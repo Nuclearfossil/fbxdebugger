@@ -30,6 +30,7 @@ namespace ImGui
 		, float* values
 		, int points_count
 		, const ImVec2& editor_size
+		, ImVec2& highlighted_value
 		, ImU32 flags
 		, int* new_count
 		, int* selected_point)
@@ -270,6 +271,8 @@ namespace ImGui
 					char tmp[64];
 					ImFormatString(tmp, sizeof(tmp), "%0.2f, %0.2f", p.x, p.y);
 					window->DrawList->AddText({ pos.x, pos.y - GetTextLineHeight() }, GraphHighlightColor, tmp);
+					highlighted_value.x = p.x;
+					highlighted_value.y = p.y;
 				}
 
 				if (IsItemActive() && IsMouseDragging(0))

@@ -132,16 +132,12 @@ void DisplayCurve(const char* label, FbxAnimCurve* curve)
 		int selectedPoint = 0;
 
 		int flags = (int)ImGui::CurveEditorFlags::NO_TANGENTS | (int)ImGui::CurveEditorFlags::SHOW_GRID;
+		ImVec2 highlighted_value;
 
-		ImGui::BeginChild(output.Buffer(), ImVec2(-1, -1), true);
-
-		if (ImGui::CurveEditor(output.Buffer(), (float*)points, keyCount, ImVec2(450, 400), flags, &newCount, &selectedPoint))
+		if (ImGui::CurveEditor(output.Buffer(), (float*)points, keyCount, ImVec2(-1, 400), highlighted_value, flags, &newCount, &selectedPoint))
 		{
+			ImGui::Text("%f, %f", highlighted_value.x, highlighted_value.y);
 		}
-
-		// ImGui::Curve(label, ImVec2(500, 400), keyCount, points);
-
-		ImGui::EndChild();
 
 		delete[] points;
 	}
