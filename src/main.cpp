@@ -21,6 +21,7 @@
 #include "misc/debug.h"
 
 #include "gui/scenegraph.h"
+#include "gui/ImTimeline.h"
 
 #include "animation/anim.h"
 #include "misc/animtool.h"
@@ -64,6 +65,8 @@ void DisplayMeshInfo(volatile AppState& state);
 void DisplaySubModel(NodeSharedPtr submodel);
 
 void DisplayAnimationInfo();
+
+void DisplayTestWindow();
 
 void Update(double deltaSeconds);
 
@@ -250,6 +253,15 @@ void BuildGUI(volatile AppState& state)
 	DisplaySceneInfo();
 
 	DisplayAnimationInfo();
+
+	DisplayTestWindow();
+}
+
+void DisplayTestWindow()
+{
+	ImGui::Begin("Test Window", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_AlwaysVerticalScrollbar);
+	ImTimeline::Timeline();
+	ImGui::End();
 }
 
 static unsigned int sSelectedId = 0;
