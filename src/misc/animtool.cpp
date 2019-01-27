@@ -8,6 +8,7 @@
 void DebugNode(FbxNode* node, FbxAnimLayer* animLayer, int& depth);
 void BuildAnimFromNode(FbxNode* node, Anim* anim, FbxAnimLayer* layer);
 bool AddAnimBlock(FbxNode* node, FbxAnimLayer* animLayer, Anim* anim);
+bool BuildAnimFromStack(fbxsdk::FbxAnimStack* defaultAnimStack, fbxsdk::FbxScene* scene, Anim* anim);
 
 Anim* BuildAnim(const char* filename)
 {
@@ -37,10 +38,23 @@ Anim* BuildAnim(const char* filename)
 
 	// We're only interested in the top level anim stack (currently).
 	defaultAnimStack = scene->GetCurrentAnimationStack();
+
+	// if we can't find the current animation stack, we move on.
+	if (defaultAnimStack != nullptr)
+	{
+		BuildAnimFromStack(defaultAnimStack, scene, anim);
+	}
+
+	fbxManager->Destroy();
+	return anim;
+}
+
+bool BuildAnimFromStack(fbxsdk::FbxAnimStack* defaultAnimStack, fbxsdk::FbxScene* scene, Anim* anim)
+{
 	FbxAnimLayer* layer = defaultAnimStack->GetSrcObject<FbxAnimLayer>(0);
 
 	fbxsdk::FbxNode* rootNode = scene->GetRootNode();
-	if (rootNode == nullptr) return nullptr;
+	if (rootNode == nullptr) return false;
 
 	int rootNodeChildCount = rootNode->GetChildCount();
 
@@ -52,9 +66,7 @@ Anim* BuildAnim(const char* filename)
 		DebugNode(node, layer, depth);
 		BuildAnimFromNode(node, anim, layer);
 	}
-
-	fbxManager->Destroy();
-	return anim;
+	return true;
 }
 
 void PrintIndent(int depth)
