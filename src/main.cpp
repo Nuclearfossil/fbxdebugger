@@ -26,6 +26,7 @@
 #include "animation/anim.h"
 #include "misc/animtool.h"
 
+#include <chrono>
 #include <thread>
 #include <fstream>
 
@@ -445,8 +446,11 @@ void DisplayAnimationInfo()
 	ImGui::End();
 }
 
+// This really is an unsanitary processing thread.
+// I'd like to revisit this at some point to make it more straightforward.
 void ProcessingThread()
 {
+	using namespace std::chrono_literals;
 	while (gAppState.ShouldExit == false)
 	{
 		if (gAppState.OpenFile)
@@ -475,6 +479,9 @@ void ProcessingThread()
 				gAppState.OpenFile = false;
 			}
 		}
+
+		// We don't have to spin on this. Suspend the thread for a bit.
+		std::this_thread::sleep_for(30ms);
 	}
 }
 
