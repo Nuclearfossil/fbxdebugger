@@ -257,7 +257,7 @@ static unsigned int sSelectedId = 0;
 void DisplaySceneInfo()
 {
 	ImGui::Begin("Scene", nullptr, ImGuiWindowFlags_HorizontalScrollbar);
-	ImGui::SetWindowSize(ImVec2(600, 400), ImGuiSetCond_FirstUseEver);
+	ImGui::SetWindowSize(ImVec2(600, 400), ImGuiCond_FirstUseEver);
 
 	if (gAppState.OpenFile)
 	{
@@ -378,7 +378,7 @@ void DisplaySubModel(NodeSharedPtr submodel)
 void DisplayAnimationInfo()
 {
 	ImGui::Begin("Animation", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_MenuBar);
-	ImGui::SetWindowSize(ImVec2(600, 400), ImGuiSetCond_FirstUseEver);
+	ImGui::SetWindowSize(ImVec2(600, 400), ImGuiCond_FirstUseEver);
 
 	if (gAppState.OpenFile)
 	{
