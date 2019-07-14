@@ -21,12 +21,17 @@ namespace ImTimeline
 		ImVec2 canvasPosition = ImGui::GetCursorScreenPos();
         ImVec2 canvasSize = ImGui::GetContentRegionAvail();
 
+		ImVec2 cursorPosInCanvas(io.MousePos.x - canvasPosition.x, io.MousePos.y - canvasPosition.y);
+
         ImRect regionRect(canvasPosition, canvasPosition + canvasSize);
 
         if (regionRect.Contains(io.MousePos))
         {
             drawList->AddRectFilled(canvasPosition, canvasPosition + canvasSize, ImGui::GetColorU32(ImVec4(0.1f, 0.1f, 0.1f, 1.0f)));
-			ImGui::Text("cursor in window, (%f, %f), (%f, %f)", canvasPosition.x, canvasPosition.y, canvasSize.x, canvasSize.y);
+			ImGui::Text("cursor in window, (%f, %f), (%f, %f) - (%f, %f)",
+				canvasPosition.x, canvasPosition.y,
+				canvasSize.x, canvasSize.y,
+				cursorPosInCanvas.x, cursorPosInCanvas.y);
 		}
 
         ImGui::EndGroup();
