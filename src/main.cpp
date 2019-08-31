@@ -107,9 +107,9 @@ int main(int, char**)
 
 	gCamera.setPosition(glm::vec3(10.0f, 10.0f, 10.0f));
 
-	LoadShaders(&gProgram, "vertex-shader.hlsl", "fragment-shader.hlsl");
-	LoadShaders(&gWireframe3DProgram, "grid-vshader.hlsl", "grid-fshader.hlsl");
-	LoadShaders(&gModelProgram, "model-vshader.hlsl", "model-fshader.hlsl");
+	LoadShaders(&gProgram, "vertex-shader.glsl", "fragment-shader.glsl");
+	LoadShaders(&gWireframe3DProgram, "grid-vshader.glsl", "grid-fshader.glsl");
+	LoadShaders(&gModelProgram, "model-vshader.glsl", "model-fshader.glsl");
 
 	gGrid.Initialize(50.0f, 50, 5);
 
